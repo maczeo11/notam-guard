@@ -26,19 +26,10 @@ def router(state: State):
     return "retrieve"
 
 def retriever(state: State):
-    # try pgvector — fallback mock
-    try:
-        import psycopg2
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("BAAI/bge-small-en-v1.5")
-        qemb = model.encode(state["query"]).tolist()
-        conn = psycopg2.connect(os.getenv("DATABASE_URL", "postgresql://notam:notam@localhost:5432/notam"))
-        cur = conn.cursor()
-        cur.execute("SELECT chunk FROM sop_chunks ORDER BY embedding <=> %s::vector LIMIT 3", (qemb,))
-        rows = cur.fetchall()
-        chunks = [r[0][:500] for r in rows] or ["DGCA CAR §7: Micro max 120m AGL", "NOTAM 09/03: Crane 100m at 18.53,73.84 radius 1km"]
-    except Exception:
-        chunks = ["DGCA CAR §7: Micro max 120m AGL", "NOTAM 09/03: Crane 100m at 18.53,73.84 radius 1km"]
+    # hex DI: swappable VectorStorePort (abc) — test with VECTOR_ADAPTER=memory
+    from src.core.container import get_vector_store
+    vs = get_vector_store()
+    chunks = vs.search(state["query"], k=3)
     state["retrieved"] = chunks
     state["citations"] = ["CAR §7", "NOTAM 09/03"]
     return state
@@ -47,7 +38,10 @@ def validator_tool(state: State):
     import time
     t0 = time.perf_counter()
     from .tools import validate_flight, create_ticket
-    from .memory import push_history, geo_add_tile
+    from src.core.container import get_memory
+    mem = get_memory()
+    # keep geo helper simple
+    from .memory import geo_add_tile
     res = validate_flight(state["lat"], state["lon"], state["alt"])
     state["verdict"] = "BLOCK" if res["violation"] else "ALLOW"
     state["reason"] = res["reason"]
@@ -60,7 +54,7 @@ def validator_tool(state: State):
         state["ticket_id"] = t["ticket_id"] or "deduped"
         state["_ticket_key"] = t["key"]
         if not t["deduped"]:
-            push_history(state["drone_id"], state["ticket_id"])
+            mem.push(state["drone_id"], state["ticket_id"])
         geo_add_tile(state["lon"], state["lat"], state["drone_id"])
     else:
         state["ticket_id"] = ""

@@ -1,8 +1,9 @@
 import os
 from typing import List
+from src.core.ports import MemoryPort
 _mem = {}
 
-class RedisAdapter:
+class RedisAdapter(MemoryPort):
     def __init__(self):
         try:
             import redis

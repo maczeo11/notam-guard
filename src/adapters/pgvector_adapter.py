@@ -1,7 +1,8 @@
 import os
 from typing import List
+from src.core.ports import VectorStorePort
 
-class PgVectorAdapter:
+class PgVectorAdapter(VectorStorePort):
     def search(self, query: str, k: int = 3) -> List[str]:
         try:
             import psycopg2
@@ -15,6 +16,6 @@ class PgVectorAdapter:
         except Exception:
             return ["DGCA CAR §7: Micro max 120m AGL", "NOTAM 09/03: Crane 100m at 18.53,73.84 radius 1km"]
 
-class InMemoryVectorAdapter:
+class InMemoryVectorAdapter(VectorStorePort):
     def search(self, query: str, k: int = 3) -> List[str]:
         return ["DGCA CAR §7: Micro max 120m AGL", "NOTAM 09/03: Crane 100m at 18.53,73.84 radius 1km"]
