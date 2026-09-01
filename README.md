@@ -1,41 +1,81 @@
-# NOTAM-Guard — Agentic Compliance Gate for Drone Operations
+# NOTAM-Guard
 
-> Validates `flight_plan {lat,lon,alt,drone_id,time}` against **DGCA CAR + NOTAMs** → `ALLOW / BLOCK + citation + human gate`. RAG + tool-calling with grounding, eval, and idempotent tickets.
+**Agentic compliance gate for drone operations — RAG over DGCA CAR + NOTAMs → ALLOW / BLOCK + citation + human gate.**
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org) [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)](https://fastapi.tiangolo.com) [![LangGraph](https://img.shields.io/badge/LangGraph-0.2-purple)](https://langchain-ai.github.io/langgraph/) [![pgvector](https://img.shields.io/badge/pgvector-384d-orange)](https://github.com/pgvector/pgvector)
+Validates `flight_plan {lat,lon,alt,drone_id,time}` before dispatch. Grounding, idempotent tickets, fleet memory, and eval — not chat-with-PDF.
 
-## What it does
-- **RAG** over DGCA CAR Section 3 + NOTAMs: `chunk 512 → bge-small 384d → pgvector top-k3` with citation grounding.
-- **Tools** `validate_flight(lat,lon,alt)` haversine + 120m AGL, `check_notam`, `create_ticket` idempotent `hash(drone|notam|window) TTL 24h`.
-- **Memory** `Redis drone:{id}:history 5` + tile `GEO` — fleet remembers last clearances.
-- **Safety** `grounding_check` citation vs retrieved → `conf 0.5 + human HOLD` if `BLOCK/conf<0.7`.
+<p>
+  <img src="https://img.shields.io/badge/python-3.11-blue?style=flat-square" alt="python">
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square" alt="fastapi">
+  <img src="https://img.shields.io/badge/LangGraph-0.2-7B5EFF?style=flat-square" alt="langgraph">
+  <img src="https://img.shields.io/badge/pgvector-384d-FF6B6B?style=flat-square" alt="pgvector">
+  <img src="https://img.shields.io/badge/Redis-7-DC382D?style=flat-square" alt="redis">
+  <img src="https://img.shields.io/badge/LangSmith-traced-000?style=flat-square" alt="langsmith">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="license">
+</p>
 
-**Demo:** `POST /validate 18.53,73.84,120m` → `BLOCK NOTAM 09/03 crane 100m within 0.00km — reduce to 80m + T-885 1/49` + citations.
+## Why
+
+Most RAG demos retrieve and answer. Real airspace needs **safety**: every `BLOCK` must cite the exact `CAR §` or `NOTAM id` from retrieved chunks, dedupe tickets, and hold for human if grounding fails. NOTAM-Guard does that in 3 tools and 15 golden tests.
+
+## Features
+
+- **Router** decides `retrieve / act / both` — true multi-agent, not fixed pipeline
+- **RAG** `chunk 512 → bge-small-en 384d → pgvector top-k3` over DGCA CAR + NOTAMs
+- **Grounding check** `citation in retrieved?` → `confidence 0.5 + human HOLD` if hallucinated
+- **Tools** `validate_flight` haversine + 120m AGL, `check_notam`, `create_ticket hash(drone|notam|window) TTL 24h SETNX` → 50-concurrent 1/49
+- **Memory** `Redis drone:{id}:history 5` + tile `GEO` — fleet remembers last clearances per 100m
+- **Eval** 15 golden `BLOCK/ALLOW` `precision@3 1.00 verdict 1.00 p50 0.2ms p95 218ms` + LangSmith trace per edge
+- **Safety** `BLOCK or conf<0.7 → requires_human=true`
+
+## Architecture
+
+```mermaid
+flowchart LR
+  A[POST /validate] --> B[Router]
+  B --> C[Retriever pgvector]
+  B --> D[Validator haversine]
+  C --> E[Responder]
+  D --> E
+  E --> F[Critic grounding + human gate]
+  F --> G[(Redis + Postgres)]
+  F --> H[LangSmith]
+```
+
+`Client → FastAPI → LangGraph State {query, lat,lon,alt, retrieved, verdict} → Redis/Postgres/LangSmith` — see `docs/ARCHITECTURE.md`.
+
+**Demo:** `18.53,73.84,120m` → `BLOCK NOTAM 09/03 crane 100m within 0.00km — reduce to 80m + T-885 1/49` + `["CAR §7","NOTAM 09/03"]`
 
 ## Project structure
+
 ```
 notam-gaurd/
- README.md
- docs/ ARCHITECTURE.md  — graph, state, nodes, memory, safety
-       SETUP.md         — docker, ingest, run, test
-       EVAL.md          — precision@3, p50/p95, failure cases
- src/
-  app.py        — FastAPI /validate /ingest /ticket /health
-  graph.py      — LangGraph State {query,lat,lon,alt,retrieved,verdict} router→retriever→validator→responder→critic
-  tools.py      — haversine, validate_flight, create_ticket SETNX
-  memory.py     — Redis helper with in-mem fallback
-  ingest.py     — chunk 512 → bge-small → pgvector (fallback data/chunks.json)
-  eval.py       — 15 golden queries, p50/p95
- data/
-  test_queries.json — 15 BLOCK/ALLOW
- docker-compose.yml — postgres:16-pgvector:5432 + redis:7:6379
- requirements.txt  — fastapi, langgraph, pgvector, redis, sentence-transformers, langsmith
- .env.example      — OPENAI_API_KEY, LANGCHAIN_TRACING_V2, DATABASE_URL, REDIS_URL
+├── README.md
+├── docs/
+│   ├── ARCHITECTURE.md   # graph, state, nodes, safety
+│   ├── SETUP.md          # docker, ingest, run
+│   └── EVAL.md           # metrics, failure cases
+├── src/
+│   ├── app.py            # FastAPI /validate /ingest /ticket /health
+│   ├── graph.py          # State, router, retriever, validator, responder, critic
+│   ├── tools.py          # haversine, validate_flight, create_ticket
+│   ├── memory.py         # Redis helper + in-mem fallback
+│   ├── ingest.py         # chunk → embed → pgvector
+│   ├── eval.py           # 15 golden, p50/p95
+│   └── __init__.py
+├── data/
+│   └── test_queries.json # 15 BLOCK/ALLOW
+├── docker-compose.yml    # postgres:16-pgvector:5432 + redis:7:6379
+├── requirements.txt
+└── .env.example
 ```
 
-See `docs/ARCHITECTURE.md` for flow diagram.
+## Tech stack
+
+`Python 3.11, FastAPI/Pydantic, LangGraph StateGraph, LangChain, pgvector, Postgres 16, Redis 7, sentence-transformers bge-small, LangSmith, Docker, pytest, Uvicorn`
 
 ## Quickstart
+
 ```bash
 git clone https://github.com/maczeo11/notam-gaurd.git && cd notam-gaurd
 python -m venv .venv && source .venv/bin/activate # Windows: .venv\Scripts\activate
@@ -44,19 +84,37 @@ cp .env.example .env # set OPENAI_API_KEY + LANGCHAIN_TRACING_V2=true LANGCHAIN_
 
 docker compose up -d
 python src/ingest.py --docs data/dgca_car.pdf data/notams/*.txt --chunk 512
+
 uvicorn src.app:app --reload --port 8000 # http://localhost:8000/docs
 curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" -d '{"lat":18.53,"lon":73.84,"alt":120,"drone_id":"D12"}'
 ```
 
+## API
+
+| Method | Path | Body | Resp |
+|---|---|---|---|
+| `POST` | `/validate` | `{lat,lon,alt,drone_id,query?}` | `{verdict, reason, citations[], ticket_id, requires_human, retrieved[]}` |
+| `POST` | `/ingest` | `multipart pdf/txt` | `{chunks}` |
+| `GET` | `/ticket/{id}` | — | `{status}` |
+| `GET` | `/health` | — | `{ok:true}` |
+
 ## Eval
+
 ```bash
 python src/eval.py
-# precision@3 1.00 verdict 1.00 p50 0.2ms p95 218ms (first query warms model)
+# Q01 BLOCK vs BLOCK ret 1/1 lat 218ms ...
+# precision@3 1.00 verdict 1.00 p50 0.2ms p95 218ms (first warms model)
 ```
-`docs/EVAL.md` details grounding, dedupe 50-concurrent 1/49, stale NOTAM → human.
 
-## Scope
-**In:** single-site DGCA/NOTAM gate, 3 tools, grounding, eval, LangSmith traces. **Out:** full fleet orchestration, VLM fine-tune — labeled POC.
+15 queries `CAR §7 / NOTAM 09/03` — see `docs/EVAL.md` for grounding, dedupe `50× 1/49`, stale NOTAM → human.
 
-## Tech
-`Python, FastAPI/Pydantic, LangGraph, pgvector, Postgres, Redis, sentence-transformers, LangSmith, Docker, pytest`
+## Roadmap
+
+- [x] Router + RAG + tools + grounding + eval
+- [ ] Pre-filter by region/date before vector
+- [ ] VLM stub `Qwen2-VL-2B` aerial obstacle `yes/no` (POC, not prod)
+- [ ] `AWS ECS g4dn` deploy + p95 dashboard
+
+## License
+
+MIT — Komma Bhanu Teja · `bhanu0005a@gmail.com` · `github.com/maczeo11`
