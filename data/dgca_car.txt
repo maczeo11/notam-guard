@@ -1,0 +1,5 @@
+﻿DGCA CAR Section 3 - Air Transport - RPA Operations
+§7 Micro RPA ( <2kg ): Max altitude 120m AGL, UIN required, NPNT compliance mandatory. Flight over 120m requires DGCA approval.
+§8 Nano RPA ( <250g ): Max 50ft AGL, no UIN if flown below 50ft.
+§9 All RPA must maintain 5km from airport, 1km from crane/obstacle as per NOTAM.
+§12 Battery safety: swap if RUL <20 cycles and temp >35C.

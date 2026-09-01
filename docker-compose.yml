@@ -23,6 +23,10 @@ services:
     environment:
       DATABASE_URL: postgresql://notam:notam@postgres:5432/notam
       REDIS_URL: redis://redis:6379/0
+      # The API talks to real infrastructure here. Until `python -m src.ingest`
+      # has run, retrieval fails and every flight is held — by design.
+      VECTOR_ADAPTER: pgvector
+      LLM_ADAPTER: ${LLM_ADAPTER:-rule}
     depends_on:
       postgres:
         condition: service_healthy

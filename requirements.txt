@@ -1,14 +1,22 @@
-fastapi==0.115.0
-uvicorn[standard]==0.34.0
-pydantic==2.11.3
-langchain==0.3.19
-langgraph==0.2.41
-langsmith==0.2.6
-psycopg2-binary==2.9.10
-pgvector==0.3.6
-redis==5.2.1
-sentence-transformers==3.4.1
-python-dotenv==1.0.1
-openai==1.68.2
-pytest==8.3.4
-httpx==0.28.1
+# Runtime
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.11
+python-dotenv>=1.0
+
+# Decision graph and tracing
+langgraph>=0.2.41
+langsmith>=0.2.6
+
+# LLM backends. Only the one named by LLM_ADAPTER is imported at runtime; with
+# LLM_ADAPTER=rule the service runs with neither installed.
+langchain-groq>=0.2
+# langchain-ollama>=0.2   # uncomment for a local model instead of Groq
+
+# Vector store. Not needed when VECTOR_ADAPTER=memory.
+psycopg2-binary>=2.9.10
+pgvector>=0.3.6
+sentence-transformers>=3.4
+
+# Fleet memory. Falls back to in-process storage when unreachable.
+redis>=5.2
