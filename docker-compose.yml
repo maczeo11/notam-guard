@@ -7,8 +7,33 @@ services:
       POSTGRES_PASSWORD: notam
     ports: ["5432:5432"]
     volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notam"]
+      interval: 5s
+      retries: 5
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports: ["8000:8000"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://notam:notam@postgres:5432/notam
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports: ["5173:5173"]
+    depends_on:
+      - api
 volumes:
   postgres_data:
