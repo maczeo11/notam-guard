@@ -1,58 +1,111 @@
-# SETUP — NOTAM-Guard
+# Setup
 
-## Prereqs
-- Python 3.11, Docker Desktop, Git, `LANGCHAIN_API_KEY` for LangSmith (free tier)
-- Victus 16GB — runs without GPU
+## Prerequisites
 
-## 1. Clone & Env
+Python 3.11+. Docker is optional — the service runs without Postgres, Redis or an
+LLM provider by selecting the in-process adapters.
+
+## Fastest path: no infrastructure
+
 ```bash
 git clone https://github.com/maczeo11/notam-guard && cd notam-guard
-python -m venv .venv && source .venv/bin/activate # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env # set OPENAI_API_KEY, LANGCHAIN_TRACING_V2=true, LANGCHAIN_API_KEY
+python -m venv .venv && .venv/Scripts/activate    # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+
+VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest
+VECTOR_ADAPTER=memory LLM_ADAPTER=rule uvicorn src.app:app --reload --port 8000
 ```
 
-## 2. Infra
+This uses lexical retrieval over `data/`, the deterministic router, and in-process
+memory and tickets. Verdict logic is identical to the full stack — only the retrieval
+backend and the sentence rendering differ.
+
+## Full stack
+
 ```bash
-docker compose up -d # postgres:16-pgvector on 5432, redis:7 on 6379
-# check: docker ps
+docker compose up -d                 # pgvector on 5432, redis on 6379, api, web
+python -m src.ingest --docs "data/dgca_car.txt" "data/notams/*.txt"
 ```
 
-## 3. Ingest DGCA + NOTAMs
-Place `data/dgca_car.pdf` (DGCA CAR Section 3 Air Transport) + `data/notams/*.txt` (10 sample NOTAMs e.g., `notam_0903_crane.txt`)
+`ingest` embeds with `bge-small-en-v1.5` (~80MB on first run) and writes to
+`sop_chunks`. It raises on failure rather than falling back, because a service
+pointed at an empty table would `HOLD` every flight without saying why. Use
+`--dry-run` to write `data/chunks.json` and skip the database.
+
+Then `http://localhost:8000/docs` for the API, `http://localhost:5173` for the map UI.
+
+## Configuration
+
+Every variable is read in `src/core/config.py` and nowhere else.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VECTOR_ADAPTER` | `pgvector` | `pgvector` or `memory` |
+| `LLM_ADAPTER` | `groq` if `GROQ_API_KEY` else `rule` | `rule`, `groq`, `ollama` |
+| `DATABASE_URL` | `postgresql://notam:notam@localhost:5432/notam` | |
+| `REDIS_URL` | `redis://localhost:6379/0` | degrades to in-process if unreachable |
+| `NOTAM_DIR` | `data/notams` | corpus the parser reads |
+| `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | 384-dimensional |
+| `RETRIEVAL_K` | `3` | chunks per query |
+| `MAX_AGL_M` | `120` | DGCA CAR §7 ceiling |
+| `HUMAN_GATE_CONFIDENCE` | `0.75` | below this an `ALLOW` becomes a `HOLD` |
+| `TICKET_TTL_SECONDS` | `86400` | dedupe window |
+| `GROQ_API_KEY` | — | optional |
+| `LANGCHAIN_TRACING_V2` | `false` | `true` enables LangSmith spans |
+| `LANGCHAIN_API_KEY` | — | required when tracing is on |
+| `LOG_LEVEL` | `INFO` | |
+
+No key is required to run the service or the tests.
+
+## Tracing
+
 ```bash
-python src/ingest.py --docs data/dgca_car.pdf data/notams/*.txt --chunk 512 --model BAAI/bge-small-en-v1.5
-# verifies: 30 chunks → pgvector
+export LANGCHAIN_TRACING_V2=true
+export LANGCHAIN_API_KEY=ls__...
+export LANGCHAIN_PROJECT=notam-guard
 ```
 
-## 4. Run API
+Each graph node is decorated with `@traced`, so a trace shows which branch the router
+took and where the time went. With tracing off the decorator is a no-op and
+`langsmith` is never imported.
+
+## Trying the human gate
+
 ```bash
-uvicorn src.app:app --reload --port 8000
-# docs: http://localhost:8000/docs
+# A flight above the crane's 100m ceiling — blocked and held.
+curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" \
+  -d '{"lat":18.53,"lon":73.84,"alt":120,"drone_id":"D12"}'
+
+curl http://localhost:8000/ticket/T-XXXXXX
+curl -X POST http://localhost:8000/approve/T-XXXXXX \
+  -H "Content-Type: application/json" -d '{"approver":"ops@example.com"}'
 ```
 
-## 5. Test
+Repeat the `validate` call — the same ticket id comes back rather than a second
+ticket, for 24 hours.
+
+To see a decision change with time, pass `scheduled_for`. NOTAM 09/03 expires
+2026-09-10, so the same plan is `BLOCK` before it and `ALLOW` after:
+
 ```bash
-curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" -d '{"lat":18.52,"lon":73.85,"alt":120,"drone_id":"D12"}'
-# expect: {"verdict":"BLOCK","reason":"crane NOTAM 09/03 1km + DGCA 120m","ticket_id":"T-885","citations":["CAR §7","NOTAM 09/03"],"requires_human":true}
-curl -X POST http://localhost:8000/approve/T-885 # human gate
+curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" \
+  -d '{"lat":18.53,"lon":73.84,"alt":120,"drone_id":"D12","scheduled_for":"2026-09-15T12:00:00Z"}'
 ```
 
-## 6. LangSmith
-Set in `.env` then each request shows trace URL in logs/ `docs/EVAL.md`.
+## Adding NOTAMs
 
-## 7. Eval
-```bash
-python src/eval.py --queries data/test_queries.json # precision@3, p95
-```
+Drop a `.txt` file in `data/notams/`, one record per line. `GET /notams` shows what
+the parser extracted, including `geolocatable: false` for records it could not place —
+those are reported on every decision and reduce confidence rather than being ignored.
+Re-run `src.ingest` so retrieval sees the new text too.
 
 ## Troubleshooting
-- `qmd` not indexed `Personal/**` — correct, never put NOTAM data there.
-- `psycopg2` fail → `pip install psycopg2-binary`
-- `bge-small` download ~80MB first run.
 
-## Next: Push 15 commits
-```bash
-git add ingest.py && git commit -m "ingest: chunk512 bge pgvector"
-# ... per node
-```
+| Symptom | Cause |
+|---|---|
+| Every flight returns `HOLD` with "retrieval unavailable" | Postgres is down or the corpus was never ingested. This is the intended fail-closed behaviour. |
+| `RetrievalUnavailable: vector store returned no chunks` | Run `python -m src.ingest`. |
+| `Redis unavailable … using in-process memory` | Expected without Docker; tickets and history become process-local. |
+| Confidence is 0.85 instead of 1.0 on a clear flight | NOTAM 09/04 has no coordinates and cannot be evaluated. Working as designed. |
+| `ModuleNotFoundError: langgraph` | The sequential fallback runs instead; install it for the real state machine. |
