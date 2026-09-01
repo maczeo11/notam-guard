@@ -1,51 +1,98 @@
-import math
-import uuid
+"""Deterministic airspace checks.
 
-def haversine_km(lat1, lon1, lat2, lon2):
-    R = 6371.0
+Nothing in this module calls an LLM. The verdict for a flight plan is produced
+here, by arithmetic over parsed NOTAMs, so that a language model can never be the
+reason a flight was cleared.
+"""
+from typing import List, Optional
+import logging
+import math
+
+from src.core.config import get_settings
+from src.core.domain import FlightPlan, Notam, Severity, ValidationResult
+
+log = logging.getLogger(__name__)
+
+EARTH_RADIUS_KM = 6371.0
+DGCA_CEILING_REF = "CAR §7"
+
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance in kilometres."""
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
-    return 2*R*math.asin(math.sqrt(a))
+    a = (math.sin(dlat / 2) ** 2
+         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    return 2 * EARTH_RADIUS_KM * math.asin(math.sqrt(a))
 
-# mock NOTAM crane at 18.53,73.84 radius 1km alt 100m — replace with DB lookup later
-MOCK_NOTAMS = [
-    {"id": "NOTAM 09/03", "lat": 18.53, "lon": 73.84, "radius_km": 1.0, "max_alt": 100, "text": "Crane 100m at Pune site 18.53,73.84 radius 1km"},
-]
 
-def validate_flight(lat: float, lon: float, alt: int):
-    """Check DGCA 120m AGL + NOTAM crane. Returns {violation, reason, notam_id}"""
-    if alt > 120:
-        return {"violation": True, "reason": "DGCA CAR §7: Micro max 120m AGL breached", "notam_id": "DGCA §7"}
-    for n in MOCK_NOTAMS:
-        d = haversine_km(lat, lon, n["lat"], n["lon"])
-        if d <= n["radius_km"] and alt > n["max_alt"]:
-            return {"violation": True, "reason": f"{n['id']} crane {n['max_alt']}m within {d:.2f}km — reduce to {n['max_alt']-20}m", "notam_id": n["id"]}
-    return {"violation": False, "reason": "clear", "notam_id": None}
+def notams_near(plan: FlightPlan, notams: List[Notam]) -> List[Notam]:
+    """NOTAMs whose circle contains the flight position."""
+    hits = []
+    for notam in notams:
+        if not notam.is_geolocatable:
+            continue
+        if haversine_km(plan.lat, plan.lon, notam.lat, notam.lon) <= notam.radius_km:
+            hits.append(notam)
+    return hits
 
-def check_notam(lat: float, lon: float, radius_km: float = 1.0):
-    out = []
-    for n in MOCK_NOTAMS:
-        if haversine_km(lat, lon, n["lat"], n["lon"]) <= radius_km:
-            out.append(n)
-    return out
 
-def create_ticket(issue: str, severity: str, drone_id: str, notam_id: str = None, flight_time: str = None):
-    """Idempotent key = hash(flight_id + window + query) — CineFund SETNX transplant, TTL 24h
-    Key design: f"ticket:dedupe:{drone_id}:{notam_id or hash(issue)}:{window}" window = flight_time//3600 or date"""
-    import hashlib, time as _t
-    window = flight_time or str(int(_t.time()//86400))  # daily window — prevents duplicate ticket same NOTAM same day
-    raw = f"{drone_id}|{notam_id or issue[:30]}|{window}"
-    key = f"ticket:dedupe:{hashlib.sha256(raw.encode()).hexdigest()[:12]}"
-    ttl = 86400  # 24h — NOTAM validity window
-    if not hasattr(create_ticket, "_seen"):
-        create_ticket._seen = {}
-    # check TTL expiry mock
-    now = _t.time()
-    if key in create_ticket._seen:
-        ts, tid = create_ticket._seen[key]
-        if now - ts < ttl:
-            return {"ticket_id": None, "deduped": True, "key": key, "ttl": ttl}
-    tid = f"T-{uuid.uuid4().hex[:4].upper()}"
-    create_ticket._seen[key] = (now, tid)
-    return {"ticket_id": tid, "deduped": False, "key": key, "ttl": ttl, "issue": issue, "severity": severity, "window": window}
+def check_notam(lat: float, lon: float, notams: List[Notam], radius_km: float = 1.0) -> List[Notam]:
+    """NOTAMs within `radius_km` of a point, regardless of altitude."""
+    return [n for n in notams
+            if n.is_geolocatable and haversine_km(lat, lon, n.lat, n.lon) <= radius_km]
+
+
+def validate_flight(plan: FlightPlan, notams: List[Notam]) -> ValidationResult:
+    """Evaluate one flight plan against the DGCA ceiling and the supplied NOTAMs.
+
+    Returns a violation with the references it relied on, plus any advisories and
+    any restriction the parser could not evaluate. Unevaluable restrictions are
+    reported rather than ignored — the caller lowers confidence for each one.
+    """
+    settings = get_settings()
+    advisories: List[str] = []
+    warnings: List[str] = []
+
+    for notam in notams:
+        if notam.severity is Severity.RESTRICTIVE and not notam.is_geolocatable:
+            warnings.append(
+                f"{notam.notam_id} states a restriction but no usable coordinates/radius "
+                f"— could not be evaluated geometrically")
+
+    if plan.alt > settings.max_agl_m:
+        return ValidationResult(
+            violation=True,
+            reason=(f"DGCA {DGCA_CEILING_REF}: micro RPA ceiling {settings.max_agl_m}m AGL "
+                    f"breached at {plan.alt}m"),
+            refs=[DGCA_CEILING_REF],
+            advisories=advisories,
+            warnings=warnings,
+        )
+
+    for notam in notams_near(plan, notams):
+        distance = haversine_km(plan.lat, plan.lon, notam.lat, notam.lon)
+        if notam.severity is Severity.ADVISORY:
+            advisories.append(f"{notam.notam_id} within {distance:.2f}km: {notam.text}")
+            continue
+        if notam.max_alt_m is not None and plan.alt > notam.max_alt_m:
+            ceiling = notam.max_alt_m
+            suggestion = (f" — reduce to {max(ceiling - 20, 0)}m" if ceiling > 0
+                          else " — area is no-fly, reroute required")
+            return ValidationResult(
+                violation=True,
+                reason=(f"{notam.notam_id}: max {ceiling}m within {notam.radius_km}km, "
+                        f"flight at {plan.alt}m and {distance:.2f}km away{suggestion}"),
+                refs=[notam.notam_id],
+                advisories=advisories,
+                warnings=warnings,
+                notam_id=notam.notam_id,
+            )
+
+    return ValidationResult(
+        violation=False,
+        reason=f"clear: {plan.alt}m within {settings.max_agl_m}m AGL and no restrictive NOTAM breached",
+        refs=[DGCA_CEILING_REF],
+        advisories=advisories,
+        warnings=warnings,
+    )
