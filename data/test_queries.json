@@ -1,0 +1,17 @@
+[
+  {"id": "Q01", "query": "D12 Pune crane 18.53 73.84 120m", "lat": 18.53, "lon": 73.84, "alt": 120, "drone_id": "D12", "expected_verdict": "BLOCK", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q02", "query": "D12 Pune 18.53 73.84 80m", "lat": 18.53, "lon": 73.84, "alt": 80, "drone_id": "D12", "expected_verdict": "ALLOW", "expected_citation": "CAR §7"},
+  {"id": "Q03", "query": "D13 Bengaluru 18.52 73.85 120m far from crane", "lat": 18.52, "lon": 73.85, "alt": 120, "drone_id": "D13", "expected_verdict": "ALLOW", "expected_citation": "CAR §7"},
+  {"id": "Q04", "query": "D14 Pune 18.53 73.84 100m exactly limit", "lat": 18.53, "lon": 73.84, "alt": 100, "drone_id": "D14", "expected_verdict": "ALLOW", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q05", "query": "D15 Pune crane 120m", "lat": 18.53, "lon": 73.84, "alt": 120, "drone_id": "D15", "expected_verdict": "BLOCK", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q06", "query": "validate DGCA max altitude", "lat": 18.50, "lon": 73.80, "alt": 130, "drone_id": "D16", "expected_verdict": "BLOCK", "expected_citation": "CAR §7"},
+  {"id": "Q07", "query": "D17 18.53 73.84 90m", "lat": 18.53, "lon": 73.84, "alt": 90, "drone_id": "D17", "expected_verdict": "ALLOW", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q08", "query": "D18 far field 19.0 74.0 120m", "lat": 19.0, "lon": 74.0, "alt": 120, "drone_id": "D18", "expected_verdict": "ALLOW", "expected_citation": "CAR §7"},
+  {"id": "Q09", "query": "D19 crane 110m", "lat": 18.53, "lon": 73.84, "alt": 110, "drone_id": "D19", "expected_verdict": "BLOCK", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q10", "query": "D20 Pune 120m no notam", "lat": 18.52, "lon": 73.85, "alt": 120, "drone_id": "D20", "expected_verdict": "ALLOW", "expected_citation": "CAR §7"},
+  {"id": "Q11", "query": "D21 18.53 73.84 121m DGCA breach", "lat": 18.53, "lon": 73.84, "alt": 121, "drone_id": "D21", "expected_verdict": "BLOCK", "expected_citation": "CAR §7"},
+  {"id": "Q12", "query": "D22 18.53 73.84 95m", "lat": 18.53, "lon": 73.84, "alt": 95, "drone_id": "D22", "expected_verdict": "ALLOW", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q13", "query": "D23 crane area 120m", "lat": 18.531, "lon": 73.841, "alt": 120, "drone_id": "D23", "expected_verdict": "BLOCK", "expected_citation": "NOTAM 09/03"},
+  {"id": "Q14", "query": "D24 18.50 73.80 100m", "lat": 18.50, "lon": 73.80, "alt": 100, "drone_id": "D24", "expected_verdict": "ALLOW", "expected_citation": "CAR §7"},
+  {"id": "Q15", "query": "D25 crane 101m", "lat": 18.53, "lon": 73.84, "alt": 101, "drone_id": "D25", "expected_verdict": "BLOCK", "expected_citation": "NOTAM 09/03"}
+]
