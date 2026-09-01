@@ -17,13 +17,9 @@ class State(TypedDict):
     requires_human: bool
 
 def router(state: State):
-    q = state.get("query","").lower()
-    has_coords = state.get("lat") is not None
-    if has_coords and ("notam" in q or "crane" in q or "dgca" in q):
-        return "both"
-    if has_coords:
-        return "act"
-    return "retrieve"
+    from src.core.container import get_llm
+    llm = get_llm()
+    return llm.route(state.get("query",""), state.get("lat") is not None)
 
 def retriever(state: State):
     # hex DI: swappable VectorStorePort (abc) — test with VECTOR_ADAPTER=memory
@@ -82,12 +78,9 @@ def grounding_check(state: State):
     return state
 
 def responder(state: State):
-    # simple synthesize — swap to LLM when key set
-    if state["verdict"] == "BLOCK":
-        state["query"] = f"{state['verdict']}: {state['reason']} — reduce to 80m. Citations: {', '.join(state['citations'])}"
-    else:
-        state["query"] = f"{state['verdict']}: clear — citations {', '.join(state['citations'])}"
-    # #7 latency hook — timestamp per stage done in validator_tool
+    from src.core.container import get_llm
+    llm = get_llm()
+    state["query"] = llm.respond(state["verdict"], state["reason"], state["citations"])
     return grounding_check(state)
 
 def build_graph():

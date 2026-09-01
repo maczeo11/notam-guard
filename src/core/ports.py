@@ -14,3 +14,9 @@ class MemoryPort(ABC):
 class TicketPort(ABC):
     @abstractmethod
     def create(self, issue: str, severity: str, drone_id: str, notam_id: str = None) -> dict: ...
+
+class LLMPort(ABC):
+    @abstractmethod
+    def route(self, query: str, has_coords: bool) -> str: ...
+    @abstractmethod
+    def respond(self, verdict: str, reason: str, citations: list) -> str: ...
