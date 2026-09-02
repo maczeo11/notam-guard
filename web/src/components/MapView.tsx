@@ -1,64 +1,88 @@
-import { MapContainer, TileLayer, Circle, Marker, Tooltip, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Circle, CircleMarker, Tooltip, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useState } from 'react'
-import type { Notam } from '../lib/api'
+import type { Notam, Verdict } from '../lib/api'
+import { VERDICT_THEME } from '../lib/verdict'
 
 const RING = {
-  restrictive: '#f43f5e',
+  restrictive: '#fb7185',
   advisory: '#38bdf8',
 }
 
-export function MapView({ notams, onPick, verdict }: {
-  notams: Notam[]
-  onPick: (lat: number, lon: number) => void
-  verdict?: string
-}) {
-  const [pos, setPos] = useState<[number, number]>([18.53, 73.84])
+const MARKER: Record<string, string> = {
+  ALLOW: '#34d399',
+  BLOCK: '#fb7185',
+  HOLD: '#fbbf24',
+  ERROR: '#7c736e',
+}
 
+export function MapView({ notams, lat, lon, verdict, onPick }: {
+  notams: Notam[]
+  lat: number
+  lon: number
+  verdict?: Verdict
+  onPick: (lat: number, lon: number) => void
+}) {
   function ClickHandler() {
-    useMapEvents({
-      click(event) {
-        setPos([event.latlng.lat, event.latlng.lng])
-        onPick(event.latlng.lat, event.latlng.lng)
-      },
-    })
+    useMapEvents({ click: e => onPick(e.latlng.lat, e.latlng.lng) })
     return null
   }
 
-  // Only NOTAMs the parser could place are drawn; the rest are reported in the
-  // panel rather than given an invented position on the map.
-  const drawable = notams.filter(n => n.geolocatable)
+  // Only NOTAMs the parser could place are drawn. The rest are named below the
+  // map rather than given an invented position.
+  const drawable = notams.filter(n => n.geolocatable && n.lat !== null && n.lon !== null)
+  const unplaceable = notams.filter(n => !n.geolocatable)
+  const colour = MARKER[verdict ?? 'ERROR'] ?? MARKER.ERROR
 
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-800">
-      <MapContainer center={pos} zoom={13} style={{ height: 380 }}>
+    <div className="panel overflow-hidden">
+      <MapContainer center={[18.535, 73.85]} zoom={13} style={{ height: 420 }} scrollWheelZoom>
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution="&copy; OpenStreetMap &copy; CARTO" />
         <ClickHandler />
-        <Marker position={pos}>
-          <Tooltip permanent direction="top">
-            {verdict ?? 'click to place a flight'}
-          </Tooltip>
-        </Marker>
+
         {drawable.map(notam => (
           <Circle
             key={notam.id}
             center={[notam.lat as number, notam.lon as number]}
-            radius={(notam.radius_km as number) * 1000}
+            radius={(notam.radius_km ?? 0) * 1000}
             pathOptions={{
               color: RING[notam.severity as keyof typeof RING] ?? RING.advisory,
-              fillOpacity: 0.12,
+              weight: 1,
+              fillOpacity: 0.07,
             }}>
             <Tooltip>
               {notam.id} · {notam.severity}
-              {notam.max_alt_m !== null ? ` · max ${notam.max_alt_m}m` : ''}
+              {notam.max_alt_m !== null ? ` · max ${notam.max_alt_m}m` : ' · no stated limit'}
             </Tooltip>
           </Circle>
         ))}
+
+        <CircleMarker
+          center={[lat, lon]}
+          radius={6}
+          pathOptions={{ color: colour, fillColor: colour, fillOpacity: 0.9, weight: 2 }}>
+          <Tooltip permanent direction="top" offset={[0, -8]}>
+            {verdict ? VERDICT_THEME[verdict].label : 'flight plan'}
+          </Tooltip>
+        </CircleMarker>
       </MapContainer>
-      <div className="px-3 py-2 text-xs text-slate-400">
-        Click the map to place a flight. Red rings are restrictive NOTAMs, blue are advisory.
+
+      <div className="px-3 py-2.5 border-t border-ink-800 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        <span className="label">Click to reposition</span>
+        <span className="flex items-center gap-1.5 text-[11px] text-ink-400">
+          <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.restrictive }} />
+          restrictive
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px] text-ink-400">
+          <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.advisory }} />
+          advisory
+        </span>
+        {unplaceable.length > 0 && (
+          <span className="text-[11px] text-amber-300/70 ml-auto">
+            {unplaceable.map(n => n.id).join(', ')} not drawn — no coordinates
+          </span>
+        )}
       </div>
     </div>
   )

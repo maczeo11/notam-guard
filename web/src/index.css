@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink-950 text-ink-200 font-sans antialiased;
+  }
+
+  /* Numerals in data positions should not shift width as they change. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* One shared surface treatment, so panels read as one system. */
+  .panel {
+    @apply bg-ink-900 border border-ink-800 rounded-lg;
+  }
+
+  .label {
+    @apply font-mono text-[10px] uppercase tracking-[0.14em] text-ink-500;
+  }
+
+  .field {
+    @apply w-full bg-ink-850 border border-ink-800 rounded px-2.5 py-1.5
+           font-mono text-sm text-ink-200 tabular
+           focus:outline-none focus:border-ink-700 focus:ring-1 focus:ring-ink-700;
+  }
+}
+
+/* Leaflet's own chrome is light by default and fights the page. */
+.leaflet-container {
+  background: #0c0a09;
+}
+.leaflet-control-attribution,
+.leaflet-bar a {
+  background: #131110 !important;
+  color: #7c736e !important;
+  border-color: #232020 !important;
+}
+.leaflet-control-attribution a {
+  color: #a49a94 !important;
+}
+.leaflet-tooltip {
+  background: #1a1817 !important;
+  border: 1px solid #332e2c !important;
+  color: #e7e2df !important;
+  font-family: '"IBM Plex Mono"', monospace;
+  font-size: 11px;
+  box-shadow: none !important;
+}
+.leaflet-tooltip::before {
+  border-top-color: #332e2c !important;
+}

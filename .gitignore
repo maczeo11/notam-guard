@@ -16,3 +16,4 @@ node_modules/
 # Generated artefacts
 data/chunks.json
 eval.json
+web/dist/

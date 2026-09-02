@@ -1,7 +1,9 @@
 export type Evidence = { ref: string; grounded: boolean; excerpt: string }
 
+export type Verdict = 'ALLOW' | 'BLOCK' | 'HOLD' | 'ERROR'
+
 export type Decision = {
-  verdict: 'ALLOW' | 'BLOCK' | 'HOLD' | 'ERROR'
+  verdict: Verdict
   reason: string
   confidence: number
   citations: string[]
@@ -27,19 +29,26 @@ export type Notam = {
   source: string
 }
 
+export type FlightPlan = {
+  lat: number
+  lon: number
+  alt: number
+  drone_id: string
+  query: string
+}
+
+export const DEFAULT_QUERY = 'validate flight against DGCA CAR and active NOTAMs'
+
 async function json<T>(response: Response): Promise<T> {
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`)
   return response.json() as Promise<T>
 }
 
-export function validateFlight(lat: number, lon: number, alt: number, drone_id: string) {
+export function validateFlight(plan: FlightPlan) {
   return fetch('/api/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      lat, lon, alt, drone_id,
-      query: 'validate flight against DGCA CAR and active NOTAMs',
-    }),
+    body: JSON.stringify(plan),
   }).then(json<Decision>)
 }
 
