@@ -91,12 +91,18 @@ VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 72 passing
 VECTOR_ADAPTER=memory LLM_ADAPTER=rule python src/eval.py
 ```
 
-With Postgres, Redis and the web UI:
+To use it interactively, start the API and the map interface:
+
+```bash
+uvicorn src.app:app --reload --port 8000      # http://localhost:8000/docs
+cd web && npm install && npm run dev          # http://localhost:5173
+```
+
+With Postgres and Redis instead of the in-process adapters:
 
 ```bash
 docker compose up -d
 python -m src.ingest --docs "data/dgca_car.txt" "data/notams/*.txt"
-uvicorn src.app:app --reload --port 8000    # http://localhost:8000/docs
 ```
 
 ```bash
@@ -117,6 +123,47 @@ curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" 
   "ticket_id": "T-9F2A11"
 }
 ```
+
+## The interface shows the evidence, not just the answer
+
+A verdict on its own is an assertion. The point of this system is that you can
+check it, so the interface at `localhost:5173` puts the supporting material next
+to the decision rather than behind it.
+
+**Evidence.** Every reference the verdict relied on, marked ✓ or ✗ depending on
+whether it was actually found in the retrieved corpus, with the excerpt that
+supports it. An ✗ is not cosmetic — an ungrounded citation costs 0.40 confidence
+and turns an `ALLOW` into a `HOLD`.
+
+**Retrieved chunks.** The raw text the retriever returned, with the matched
+citation highlighted inside it. The highlight logic mirrors
+[`core/citations.py`](src/core/citations.py), so what you see marked is exactly
+what the backend matched on — not a re-implementation that could drift.
+
+**Confidence against the gate.** The meter draws the 0.75 threshold on the
+scale, so the safety policy is legible without reading
+[`core/safety.py`](src/core/safety.py). A clear flight sits at 0.85, visibly
+above the line; a flight nothing was checked against sits at 0.70, visibly below
+it, and is held.
+
+**Not assessed.** Restrictions the parser could not evaluate — NOTAM 09/04
+declares a 5km no-fly and states no coordinates — are listed separately from
+advisories, because one costs confidence and the other does not.
+
+**Scenario presets** run the four cases that produce every verdict the gate can
+return, so the whole behaviour is three clicks away:
+
+| Preset | Result | What it shows |
+|---|---|---|
+| Crane breach | `BLOCK` 0.80 | Cited, grounded, ticketed, held |
+| Clear flight | `ALLOW` 0.85 | Cleared — but not at 1.0, and the meter shows why |
+| Advisory zone | `ALLOW` 0.85 | An advisory NOTAM is reported, never auto-blocks |
+| Unchecked plan | `HOLD` 0.70 | Clear geometry, `act` route, nothing retrieved — held anyway |
+
+Colour in the interface means verdict state and nothing else; no other element
+is saturated. NOTAM circles are drawn only for records the parser could place,
+and the ones it could not are named beneath the map rather than given an
+invented position.
 
 ## API
 
@@ -157,6 +204,17 @@ src/
 ├── ingest.py              # corpus → pgvector
 └── eval.py                # scores the golden set
 tests/                     # 72 tests, no infrastructure required
+web/src/
+├── components/
+│   ├── DecisionPanel.tsx  # verdict, evidence, retrieved chunks, human gate
+│   ├── ConfidenceMeter.tsx# confidence drawn against the 0.75 gate
+│   ├── ScenarioBar.tsx    # the four preset cases
+│   ├── PlanForm.tsx       # flight plan inputs
+│   └── MapView.tsx        # NOTAM circles, coloured by severity
+└── lib/
+    ├── api.ts             # typed client
+    ├── scenarios.ts       # the preset cases and what each demonstrates
+    └── verdict.ts         # verdict theme + citation highlighting
 ```
 
 Swap any adapter with an environment variable: `VECTOR_ADAPTER=memory|pgvector`,

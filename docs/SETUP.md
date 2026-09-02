@@ -52,23 +52,43 @@ Every variable is read in `src/core/config.py` and nowhere else.
 | `HUMAN_GATE_CONFIDENCE` | `0.75` | below this an `ALLOW` becomes a `HOLD` |
 | `TICKET_TTL_SECONDS` | `86400` | dedupe window |
 | `GROQ_API_KEY` | — | optional |
-| `LANGCHAIN_TRACING_V2` | `false` | `true` enables LangSmith spans |
-| `LANGCHAIN_API_KEY` | — | required when tracing is on |
+| `GROQ_MODEL` | `openai/gpt-oss-20b` | see the note below before changing |
+| `LANGSMITH_TRACING` / `LANGCHAIN_TRACING_V2` | `false` | either name enables LangSmith spans |
+| `LANGSMITH_API_KEY` / `LANGCHAIN_API_KEY` | — | required when tracing is on |
 | `LOG_LEVEL` | `INFO` | |
 
 No key is required to run the service or the tests.
 
+### A note on the Groq model
+
+The default is `openai/gpt-oss-20b` because the Llama models are no longer
+reachable on a standard key: `llama-3.1-8b-instant` and `llama-3.3-70b-versatile`
+return `404 — does not exist or you do not have access to it` (Enterprise tier),
+and `gemma2-9b-it`, `llama3-8b-8192` and `llama-3.1-70b-versatile` return `400 —
+decommissioned`. If your key reaches a different model, set `GROQ_MODEL`.
+
+The verdict does not depend on this. With the model unreachable the router and
+responder fall through to `RuleLLMAdapter`, and the decision is unchanged — only
+the wording of the sentence differs.
+
 ## Tracing
 
+LangSmith renamed its environment variables. Both forms work here; the
+`LANGSMITH_*` names are current, the `LANGCHAIN_*` names are the legacy form.
+
 ```bash
-export LANGCHAIN_TRACING_V2=true
-export LANGCHAIN_API_KEY=ls__...
-export LANGCHAIN_PROJECT=notam-guard
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY=lsv2_pt_...      # smith.langchain.com → Settings → API Keys
+export LANGSMITH_PROJECT=notam-guard
 ```
 
-Each graph node is decorated with `@traced`, so a trace shows which branch the router
-took and where the time went. With tracing off the decorator is a no-op and
-`langsmith` is never imported.
+Each graph node is decorated with `@traced`, so a trace shows which branch the
+router took and where the time went. With tracing off the decorator is a no-op
+and `langsmith` is never imported.
+
+If the key is missing or still holds the `lsv2_...` placeholder from
+`.env.example`, tracing is disabled with a single warning rather than letting
+every span fail with a `403`.
 
 ## Trying the human gate
 

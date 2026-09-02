@@ -125,9 +125,27 @@ exactly one caller wins and every other receives the winner's id.
 ## Observability
 
 `src/core/tracing.py` exposes `@traced(name)`, a real `langsmith.traceable` when
-`LANGCHAIN_TRACING_V2` is set and a no-op otherwise. Every graph node carries it, so
-a trace shows the branch taken and the per-node timing. `state["latency_ms"]` records
-each stage independently of the tracer.
+tracing is enabled and a no-op otherwise. Every graph node carries it, so a trace
+shows the branch taken and the per-node timing. `state["latency_ms"]` records each
+stage independently of the tracer.
+
+Both `LANGSMITH_*` (current) and `LANGCHAIN_*` (legacy) variable names are read,
+since the SDK honours both and checking only one silently disables tracing for
+anyone following the current documentation. A missing or placeholder key disables
+tracing with one warning instead of a `403` per span.
+
+## Interface
+
+`web/` is a Vite + React map interface at `localhost:5173`, proxying `/api` to the
+service. It exists to make the parts of the decision that are usually invisible
+inspectable: each citation's grounded state and supporting excerpt, the retrieved
+chunks with the matched reference highlighted, confidence drawn against the 0.75
+gate, and unevaluable restrictions listed apart from advisories.
+
+The highlighting in `web/src/lib/verdict.ts` mirrors `core/citations.py::_needle`,
+so the interface marks what the backend actually matched rather than approximating
+it. `web/src/lib/scenarios.ts` holds four preset flight plans covering every
+verdict the gate can return.
 
 ## Deliberate non-goals
 
