@@ -11,8 +11,22 @@ import os
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _env_bool(name: str, default: bool) -> bool:
-    raw = os.getenv(name)
+def _env(*names: str, default: str | None = None) -> str | None:
+    """First set variable among `names`.
+
+    LangSmith renamed its variables from LANGCHAIN_* to LANGSMITH_*; the SDK
+    honours both, so this reads both rather than silently disabling tracing for
+    anyone who follows the current documentation.
+    """
+    for name in names:
+        value = os.getenv(name)
+        if value is not None:
+            return value
+    return default
+
+
+def _env_bool(*names: str, default: bool) -> bool:
+    raw = _env(*names)
     if raw is None:
         return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
@@ -33,7 +47,7 @@ class Settings:
 
     llm_adapter: str = field(default_factory=lambda: os.getenv(
         "LLM_ADAPTER", "groq" if os.getenv("GROQ_API_KEY") else "rule"))
-    groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"))
+    groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"))
     groq_api_key: str | None = field(default_factory=lambda: os.getenv("GROQ_API_KEY"))
     ollama_model: str = field(default_factory=lambda: os.getenv("OLLAMA_MODEL", "llama3.1:8b"))
 
@@ -50,7 +64,10 @@ class Settings:
     # DGCA CAR Section 3 §7: micro RPA ceiling.
     max_agl_m: int = field(default_factory=lambda: int(os.getenv("MAX_AGL_M", "120")))
 
-    tracing_enabled: bool = field(default_factory=lambda: _env_bool("LANGCHAIN_TRACING_V2", False))
+    tracing_enabled: bool = field(default_factory=lambda: _env_bool(
+        "LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", default=False))
+    tracing_api_key: str | None = field(default_factory=lambda: _env(
+        "LANGSMITH_API_KEY", "LANGCHAIN_API_KEY"))
     log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
 
 

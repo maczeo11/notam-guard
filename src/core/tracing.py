@@ -24,10 +24,20 @@ def _resolve():
     settings = get_settings()
     if not settings.tracing_enabled:
         return _noop
+
+    key = settings.tracing_api_key
+    if not key or key.startswith("lsv2_...") or "..." in key:
+        # A placeholder copied from .env.example fails with a 403 on every
+        # request. Say so once here instead of once per span.
+        log.warning("tracing is enabled but LANGSMITH_API_KEY looks unset or is a "
+                    "placeholder — traces will be rejected; get a key at "
+                    "https://smith.langchain.com/settings")
+        return _noop
+
     try:
         from langsmith import traceable
     except ImportError:
-        log.warning("LANGCHAIN_TRACING_V2 is set but langsmith is not installed")
+        log.warning("tracing is enabled but langsmith is not installed")
         return _noop
 
     def decorator(name: str):
