@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Circle, CircleMarker, Tooltip, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Circle, CircleMarker, Tooltip, useMapEvents, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
 import 'leaflet/dist/leaflet.css'
 import type { Notam, Verdict } from '../lib/api'
 import { VERDICT_THEME } from '../lib/verdict'
@@ -15,6 +16,17 @@ const MARKER: Record<string, string> = {
   ERROR: '#7c736e',
 }
 
+function ClickHandler({ onPick }: { onPick: (lat: number, lon: number) => void }) {
+  useMapEvents({ click: e => onPick(e.latlng.lat, e.latlng.lng) })
+  return null
+}
+
+function FlyTo({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap()
+  useEffect(() => { map.flyTo([lat, lon], map.getZoom(), { duration: 0.6 }) }, [lat, lon, map])
+  return null
+}
+
 export function MapView({ notams, lat, lon, verdict, onPick }: {
   notams: Notam[]
   lat: number
@@ -22,10 +34,6 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
   verdict?: Verdict
   onPick: (lat: number, lon: number) => void
 }) {
-  function ClickHandler() {
-    useMapEvents({ click: e => onPick(e.latlng.lat, e.latlng.lng) })
-    return null
-  }
 
   // Only NOTAMs the parser could place are drawn. The rest are named below the
   // map rather than given an invented position.
@@ -37,9 +45,11 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
     <div className="panel overflow-hidden">
       <MapContainer center={[18.535, 73.85]} zoom={13} style={{ height: 420 }} scrollWheelZoom>
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution="&copy; OpenStreetMap &copy; CARTO" />
-        <ClickHandler />
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+          className="dark-tiles" />
+        <ClickHandler onPick={onPick} />
+        <FlyTo lat={lat} lon={lon} />
 
         {drawable.map(notam => (
           <Circle
@@ -63,7 +73,7 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
           radius={6}
           pathOptions={{ color: colour, fillColor: colour, fillOpacity: 0.9, weight: 2 }}>
           <Tooltip permanent direction="top" offset={[0, -8]}>
-            {verdict ? VERDICT_THEME[verdict].label : 'flight plan'}
+            {verdict ? VERDICT_THEME[verdict]?.label ?? 'flight plan' : 'flight plan'}
           </Tooltip>
         </CircleMarker>
       </MapContainer>
@@ -79,7 +89,7 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
           advisory
         </span>
         {unplaceable.length > 0 && (
-          <span className="text-[11px] text-amber-300/70 ml-auto">
+          <span className="text-[11px] text-amber-300/70 ml-auto truncate max-w-xs" title={unplaceable.map(n => n.id).join(', ')}>
             {unplaceable.map(n => n.id).join(', ')} not drawn — no coordinates
           </span>
         )}

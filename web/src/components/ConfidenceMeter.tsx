@@ -4,7 +4,7 @@ const GATE = 0.75
  * Draws confidence against the human-gate threshold. The point is not the
  * number but its position relative to the line: below it, nothing is cleared.
  */
-export function ConfidenceMeter({ value, tone }: { value: number; tone: string }) {
+export function ConfidenceMeter({ value = 0, tone }: { value?: number; tone: string }) {
   const pct = Math.max(0, Math.min(1, value)) * 100
   const below = value < GATE
 

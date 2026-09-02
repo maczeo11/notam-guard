@@ -46,6 +46,8 @@ export function DecisionPanel({ decision }: { decision: Decision }) {
     try {
       await approveTicket(decision.ticket_id, 'ops@console')
       setApproved(true)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to approve ticket')
     } finally {
       setApproving(false)
     }
@@ -123,8 +125,8 @@ export function DecisionPanel({ decision }: { decision: Decision }) {
       {decision.advisories?.length > 0 && (
         <Section title="Advisories" count={decision.advisories.length}>
           <ul className="space-y-1">
-            {decision.advisories.map(item => (
-              <li key={item} className="text-[11px] leading-snug text-sky-300/80 pl-3 border-l border-sky-900">
+            {decision.advisories.map((item, i) => (
+              <li key={i} className="text-[11px] leading-snug text-sky-300/80 pl-3 border-l border-sky-900">
                 {item}
               </li>
             ))}
@@ -135,8 +137,8 @@ export function DecisionPanel({ decision }: { decision: Decision }) {
       {decision.warnings?.length > 0 && (
         <Section title="Not assessed" count={decision.warnings.length}>
           <ul className="space-y-1">
-            {decision.warnings.map(item => (
-              <li key={item} className="text-[11px] leading-snug text-amber-300/80 pl-3 border-l border-amber-900">
+            {decision.warnings.map((item, i) => (
+              <li key={i} className="text-[11px] leading-snug text-amber-300/80 pl-3 border-l border-amber-900">
                 {item}
               </li>
             ))}

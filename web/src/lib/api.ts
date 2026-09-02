@@ -44,26 +44,38 @@ async function json<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  try {
+    const res = await fetch(url, init)
+    return await json<T>(res)
+  } catch (err) {
+    if (err instanceof TypeError) {
+      throw new Error('Network error. Is the backend running?')
+    }
+    throw err
+  }
+}
+
 export function validateFlight(plan: FlightPlan) {
-  return fetch('/api/validate', {
+  return request<Decision>('/api/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(plan),
-  }).then(json<Decision>)
+  })
 }
 
 export function approveTicket(ticketId: string, approver: string) {
-  return fetch(`/api/approve/${ticketId}`, {
+  return request<{ ticket_id: string; status: string }>(`/api/approve/${ticketId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ approver }),
-  }).then(json<{ ticket_id: string; status: string }>)
+  })
 }
 
 export function listNotams() {
-  return fetch('/api/notams').then(json<{ count: number; notams: Notam[] }>)
+  return request<{ count: number; notams: Notam[] }>('/api/notams')
 }
 
 export function health() {
-  return fetch('/api/health').then(json<{ ok: boolean; version: string }>)
+  return request<{ ok: boolean; version: string }>('/api/health')
 }

@@ -16,7 +16,7 @@ export default function App() {
   const [version, setVersion] = useState<string>()
 
   useEffect(() => {
-    listNotams().then(r => setNotams(r.notams)).catch(() => setNotams([]))
+    listNotams().then(r => setNotams(r.notams || [])).catch(() => setNotams([]))
     health().then(r => setVersion(r.version)).catch(() => setVersion(undefined))
   }, [])
 

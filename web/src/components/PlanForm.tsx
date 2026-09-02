@@ -13,18 +13,18 @@ export function PlanForm({ plan, loading, onChange, onSubmit }: {
       <div className="grid grid-cols-3 gap-2">
         <label className="space-y-1">
           <span className="label">Lat</span>
-          <input className="field" value={plan.lat}
-                 onChange={e => onChange({ lat: parseFloat(e.target.value) || 0 })} />
+          <input className="field" type="number" step="any" value={plan.lat}
+                 onChange={e => onChange({ lat: e.target.value === '' ? 0 : parseFloat(e.target.value) })} />
         </label>
         <label className="space-y-1">
           <span className="label">Lon</span>
-          <input className="field" value={plan.lon}
-                 onChange={e => onChange({ lon: parseFloat(e.target.value) || 0 })} />
+          <input className="field" type="number" step="any" value={plan.lon}
+                 onChange={e => onChange({ lon: e.target.value === '' ? 0 : parseFloat(e.target.value) })} />
         </label>
         <label className="space-y-1">
           <span className="label">Alt AGL m</span>
           <input className="field" type="number" value={plan.alt}
-                 onChange={e => onChange({ alt: parseInt(e.target.value) || 0 })} />
+                 onChange={e => onChange({ alt: e.target.value === '' ? 0 : parseInt(e.target.value) })} />
         </label>
       </div>
 
