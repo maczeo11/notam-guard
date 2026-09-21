@@ -95,13 +95,3 @@ class GroqLLMAdapter(_ChatModelAdapter):
                                  temperature=0)
         except Exception as exc:
             log.warning("Groq unavailable (%s) — using rule adapter", exc)
-
-
-class OllamaLLMAdapter(_ChatModelAdapter):
-    def __init__(self):
-        super().__init__()
-        try:
-            from langchain_ollama import ChatOllama
-            self._llm = ChatOllama(model=get_settings().ollama_model, temperature=0)
-        except Exception as exc:
-            log.warning("Ollama unavailable (%s) — using rule adapter", exc)

@@ -49,7 +49,6 @@ class Settings:
         "LLM_ADAPTER", "groq" if os.getenv("GROQ_API_KEY") else "rule"))
     groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"))
     groq_api_key: str | None = field(default_factory=lambda: os.getenv("GROQ_API_KEY"))
-    ollama_model: str = field(default_factory=lambda: os.getenv("OLLAMA_MODEL", "llama3.1:8b"))
 
     notam_dir: Path = field(default_factory=lambda: Path(
         os.getenv("NOTAM_DIR", str(REPO_ROOT / "data" / "notams"))))

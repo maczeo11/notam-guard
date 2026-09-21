@@ -56,7 +56,7 @@ Five ports in `src/core/ports.py`, resolved through `src/core/container.py`:
 | `MemoryPort` | `RedisMemoryAdapter` | `InMemoryMemoryAdapter` |
 | `TicketPort` | `RedisTicketAdapter` (`SET NX`) | `InMemoryTicketAdapter` (lock) |
 | `NotamRepositoryPort` | `FileNotamRepository` | `InMemoryNotamRepository` |
-| `LLMPort` | `GroqLLMAdapter`, `OllamaLLMAdapter` | `RuleLLMAdapter` |
+| `LLMPort` | `GroqLLMAdapter` | `RuleLLMAdapter` |
 
 `container.override(...)` injects doubles; `container.reset()` clears them. The
 autouse fixture in `tests/conftest.py` does both around every test, which is why the

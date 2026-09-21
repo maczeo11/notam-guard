@@ -42,7 +42,7 @@ Every variable is read in `src/core/config.py` and nowhere else.
 | Variable | Default | Purpose |
 |---|---|---|
 | `VECTOR_ADAPTER` | `pgvector` | `pgvector` or `memory` |
-| `LLM_ADAPTER` | `groq` if `GROQ_API_KEY` else `rule` | `rule`, `groq`, `ollama` |
+| `LLM_ADAPTER` | `groq` if `GROQ_API_KEY` else `rule` | `rule`, `groq` |
 | `DATABASE_URL` | `postgresql://notam:notam@localhost:5432/notam` | |
 | `REDIS_URL` | `redis://localhost:6379/0` | degrades to in-process if unreachable |
 | `NOTAM_DIR` | `data/notams` | corpus the parser reads |
