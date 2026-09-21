@@ -73,11 +73,8 @@ def get_notam_repository() -> NotamRepositoryPort:
 
 def get_llm() -> LLMPort:
     def build():
-        from src.adapters.llm_adapter import GroqLLMAdapter, OllamaLLMAdapter, RuleLLMAdapter
-        adapter = get_settings().llm_adapter
-        if adapter == "ollama":
-            return OllamaLLMAdapter()
-        if adapter == "groq":
+        from src.adapters.llm_adapter import GroqLLMAdapter, RuleLLMAdapter
+        if get_settings().llm_adapter == "groq":
             return GroqLLMAdapter()
         return RuleLLMAdapter()
     return _resolve("llm", build)

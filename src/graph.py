@@ -8,6 +8,7 @@ The router's choice is a real branch, taken through `add_conditional_edges` —
 not a value computed and then ignored. The verdict is produced by `safety`, which
 runs before `responder`, so the LLM renders a decision it cannot influence.
 """
+
 from typing import List, TypedDict
 import logging
 import time
@@ -161,9 +162,8 @@ def safety(state: State) -> dict:
         update["ticket_id"] = ticket.ticket_id
         update["ticket_deduped"] = ticket.deduped
         if not ticket.deduped:
-            memory = container.get_memory()
-            update["history"] = memory.push_history(state["drone_id"], ticket.ticket_id)
-            memory.add_tile(state["lat"], state["lon"], state["drone_id"])
+            update["history"] = container.get_memory().push_history(
+                state["drone_id"], ticket.ticket_id)
 
     update["latency_ms"] = _record_latency(state, "safety", started)
     return update
@@ -189,16 +189,9 @@ def _after_retriever(state: State) -> str:
 
 
 def build_graph():
-    """Compile the LangGraph state machine.
-
-    An ImportError falls back to an equivalent sequential runner so the eval and
-    tests run without the dependency; any other error is a real bug and is raised.
-    """
-    try:
-        from langgraph.graph import END, StateGraph
-    except ImportError:
-        log.warning("langgraph not installed — using the sequential fallback runner")
-        return _SequentialGraph()
+    """Compile the LangGraph state machine. `langgraph` is a hard dependency
+    (see requirements.txt) — there is no fallback runner."""
+    from langgraph.graph import END, StateGraph
 
     builder = StateGraph(State)
     for name, node in (("router", router), ("retriever", retriever),
@@ -214,22 +207,6 @@ def build_graph():
     builder.add_edge("safety", "responder")
     builder.add_edge("responder", END)
     return builder.compile()
-
-
-class _SequentialGraph:
-    """Mirrors the compiled graph's branching, for environments without LangGraph."""
-
-    def invoke(self, state: State) -> State:
-        state = {**state, **router(state)}
-        if _after_router(state) == "retriever":
-            state = {**state, **retriever(state)}
-            if _after_retriever(state) == "validator":
-                state = {**state, **validator(state)}
-        else:
-            state = {**state, **validator(state)}
-        state = {**state, **safety(state)}
-        state = {**state, **responder(state)}
-        return state
 
 
 def initial_state(plan: FlightPlan) -> State:

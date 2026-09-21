@@ -8,10 +8,8 @@ python-dotenv>=1.0
 langgraph>=0.2.41
 langsmith>=0.2.6
 
-# LLM backends. Only the one named by LLM_ADAPTER is imported at runtime; with
-# LLM_ADAPTER=rule the service runs with neither installed.
+# LLM backend. Imported only when LLM_ADAPTER=groq; the rule adapter needs neither.
 langchain-groq>=0.2
-# langchain-ollama>=0.2   # uncomment for a local model instead of Groq
 
 # Vector store. Not needed when VECTOR_ADAPTER=memory.
 psycopg2-binary>=2.9.10

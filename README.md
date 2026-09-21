@@ -218,7 +218,7 @@ web/src/
 ```
 
 Swap any adapter with an environment variable: `VECTOR_ADAPTER=memory|pgvector`,
-`LLM_ADAPTER=rule|groq|ollama`. Redis and Postgres degrade to in-process
+`LLM_ADAPTER=rule|groq`. Redis and Postgres degrade to in-process
 equivalents when unreachable — except retrieval, which fails closed by design.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the state machine and the

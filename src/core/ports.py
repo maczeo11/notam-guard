@@ -32,14 +32,6 @@ class MemoryPort(ABC):
     def get_history(self, drone_id: str) -> List[str]:
         ...
 
-    @abstractmethod
-    def add_tile(self, lat: float, lon: float, drone_id: str) -> str:
-        """Remember that `drone_id` was cleared near this position. Returns the tile key."""
-
-    @abstractmethod
-    def get_tile(self, lat: float, lon: float) -> Optional[str]:
-        ...
-
 
 class TicketPort(ABC):
     @abstractmethod
