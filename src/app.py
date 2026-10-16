@@ -5,7 +5,8 @@ from typing import List, Optional
 import logging
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 load_dotenv()
@@ -13,6 +14,7 @@ load_dotenv()
 from src.core import container  # noqa: E402
 from src.core.config import get_settings  # noqa: E402
 from src.core.domain import FlightPlan  # noqa: E402
+from src.core.errors import TicketStoreUnavailable  # noqa: E402
 from src.graph import decide, get_graph  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -78,8 +80,9 @@ async def lifespan(_: FastAPI):
     logging.basicConfig(
         level=settings.log_level,
         format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    log.info("NOTAM-Guard starting: vector=%s llm=%s tracing=%s",
-             settings.vector_adapter, settings.llm_adapter, settings.tracing_enabled)
+    log.info("NOTAM-Guard starting: vector=%s llm=%s tickets=%s tracing=%s",
+             settings.vector_adapter, settings.llm_adapter, settings.ticket_store,
+             settings.tracing_enabled)
     get_graph()  # compile once, not on the first request
     yield
     container.reset()
@@ -92,6 +95,13 @@ app = FastAPI(
                 "with grounded citations and a human-in-the-loop hold.",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(TicketStoreUnavailable)
+def ticket_store_unavailable(_: Request, exc: TicketStoreUnavailable) -> JSONResponse:
+    """A dead ticket store is a temporary refusal (503), not a server bug (500)."""
+    log.error("ticket store unavailable: %s", exc)
+    return JSONResponse(status_code=503, content={"detail": "ticket store unavailable, try again"})
 
 
 @app.get("/health")

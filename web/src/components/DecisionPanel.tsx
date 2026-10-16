@@ -185,7 +185,7 @@ export function DecisionPanel({ decision, approvedBy, loading, stale, onApproved
             ))}
           </ul>
           <p className="text-xs text-ink-500 leading-snug pt-1">
-            Each of these costs confidence rather than being silently dropped.
+            Each of these is shown rather than silently dropped, and most also cost confidence.
           </p>
         </Section>
       )}

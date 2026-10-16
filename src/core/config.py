@@ -40,6 +40,12 @@ class Settings:
         "REDIS_URL", "redis://localhost:6379/0"))
     redis_connect_timeout: int = 1
 
+    # Where approval tickets live: "redis" (in-process if Redis is unreachable) or "dynamodb".
+    ticket_store: str = field(default_factory=lambda: os.getenv("TICKET_STORE", "redis").lower())
+    dynamodb_table: str = field(default_factory=lambda: os.getenv(
+        "DYNAMODB_TABLE", "notam-guard-tickets"))
+    aws_region: str | None = field(default_factory=lambda: _env("AWS_REGION", "AWS_DEFAULT_REGION"))
+
     vector_adapter: str = field(default_factory=lambda: os.getenv("VECTOR_ADAPTER", "pgvector"))
     embedding_model: str = field(default_factory=lambda: os.getenv(
         "EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"))

@@ -18,3 +18,6 @@ sentence-transformers>=3.4
 
 # Fleet memory. Falls back to in-process storage when unreachable.
 redis>=5.2
+
+# Ticket store. Imported only when TICKET_STORE=dynamodb.
+boto3>=1.35

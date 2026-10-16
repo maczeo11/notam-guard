@@ -19,3 +19,12 @@ class RetrievalUnavailable(NotamGuardError):
 
 class NotamSourceUnavailable(NotamGuardError):
     """The NOTAM corpus could not be read or contained no usable entries."""
+
+
+class TicketStoreUnavailable(NotamGuardError):
+    """The ticket store could not be reached or refused the request (for example
+    DynamoDB throttling a flood).
+
+    The verdict does not depend on it: a flight that needs a person stays held or
+    blocked whether or not a ticket could be opened.
+    """

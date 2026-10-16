@@ -8,3 +8,4 @@ python-dotenv>=1.0
 langgraph>=0.2.41
 langsmith>=0.2.6
 redis>=5.2
+boto3>=1.35

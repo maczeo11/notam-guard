@@ -59,6 +59,9 @@ def get_memory() -> MemoryPort:
 def get_ticket_store() -> TicketPort:
     def build():
         from src.adapters.ticket_adapter import InMemoryTicketAdapter, RedisTicketAdapter
+        if get_settings().ticket_store == "dynamodb":
+            from src.adapters.dynamodb_ticket_adapter import connect
+            return connect() or InMemoryTicketAdapter()
         client = _redis_client()
         return RedisTicketAdapter(client) if client else InMemoryTicketAdapter()
     return _resolve("ticket_store", build)

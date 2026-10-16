@@ -22,7 +22,7 @@ from src.core import container
 from src.core.citations import ground
 from src.core.config import get_settings
 from src.core.domain import Action, Citation, Decision, FlightPlan, Verdict
-from src.core.errors import NotamSourceUnavailable, RetrievalUnavailable
+from src.core.errors import NotamSourceUnavailable, RetrievalUnavailable, TicketStoreUnavailable
 from src.core.safety import finalise
 from src.core.tracing import traced
 from src.tools import validate_flight
@@ -163,17 +163,27 @@ def safety(state: State) -> dict:
         update["reason"] = "retrieval unavailable — cannot verify airspace, holding flight"
 
     if outcome.requires_human:
-        ticket = container.get_ticket_store().create(
-            issue=update.get("reason") or state.get("reason", ""),
-            severity="HIGH" if outcome.verdict is Verdict.BLOCK else "MEDIUM",
-            drone_id=state["drone_id"],
-            notam_id=next((c.ref for c in citations), None),
-        )
-        update["ticket_id"] = ticket.ticket_id
-        update["ticket_deduped"] = ticket.deduped
-        if not ticket.deduped:
-            update["history"] = container.get_memory().push_history(
-                state["drone_id"], ticket.ticket_id)
+        try:
+            ticket = container.get_ticket_store().create(
+                issue=update.get("reason") or state.get("reason", ""),
+                severity="HIGH" if outcome.verdict is Verdict.BLOCK else "MEDIUM",
+                drone_id=state["drone_id"],
+                notam_id=next((c.ref for c in citations), None),
+            )
+        except TicketStoreUnavailable as exc:
+            # The verdict is already decided and stays as it is. With no ticket nobody can
+            # approve the flight from the console, which is the safe direction.
+            log.error("no ticket opened for %s: %s", state["drone_id"], exc)
+            update["warnings"] = [
+                *update["warnings"],
+                "approval ticket could not be opened (the ticket store is unavailable); "
+                "a person must still review this flight"]
+        else:
+            update["ticket_id"] = ticket.ticket_id
+            update["ticket_deduped"] = ticket.deduped
+            if not ticket.deduped:
+                update["history"] = container.get_memory().push_history(
+                    state["drone_id"], ticket.ticket_id)
 
     update["latency_ms"] = _record_latency(state, "safety", started)
     return update

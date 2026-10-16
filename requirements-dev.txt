@@ -3,3 +3,5 @@ pytest>=8.3
 httpx>=0.28
 # A Redis-compatible server in-process, so the Redis adapters are tested without Docker.
 fakeredis>=2.26
+# An in-process DynamoDB, so the DynamoDB ticket store is tested without an AWS account.
+moto[dynamodb]>=5.0
