@@ -5,7 +5,7 @@ const ANSWERS = (['ALLOW', 'BLOCK', 'HOLD'] as const).map(key => VERDICT_THEME[k
 const WORDS: [string, string][] = [
   ['NOTAM', 'A short official notice about a temporary airspace restriction, such as a crane or a closed runway.'],
   ['Above ground', 'Height measured from the ground below the drone, not from sea level.'],
-  ['Rule it relied on', 'The clause or notice the answer cites, with its official text shown so you can check it.'],
+  ['Rule it relied on', 'The clause or notice the answer cites, with its source text shown so you can check it.'],
   ['How sure it is', 'A number from 0 to 1. It drops for every restriction the gate could not check.'],
 ]
 
@@ -45,8 +45,8 @@ export function Learn() {
         <div className="panel p-4 space-y-2.5">
           <h3 className="label">What is real here</h3>
           <p className="text-xs text-ink-400 leading-relaxed">
-            This is a prototype on sample data: four clauses from the DGCA drone rules and three
-            example notices. It is not for planning real flights.
+            This is a prototype on sample data: four illustrative clauses written for this demo,
+            modelled on India's drone rules, and three example notices. It is not for planning real flights.
           </p>
           <p className="text-xs text-ink-400 leading-relaxed">
             The answer comes from plain code, never from a language model, so the same plan always

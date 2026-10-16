@@ -91,7 +91,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="NOTAM-Guard",
     version="0.2.0",
-    description="Agentic compliance gate for drone dispatch: DGCA CAR + NOTAM checks "
+    description="Agentic compliance gate for drone dispatch: drone-rule + NOTAM checks "
                 "with grounded citations and a human-in-the-loop hold.",
     lifespan=lifespan,
 )

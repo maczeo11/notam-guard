@@ -14,6 +14,9 @@ from src.core.domain import FlightPlan, Notam, Severity, ValidationResult
 log = logging.getLogger(__name__)
 
 EARTH_RADIUS_KM = 6371.0
+# Key of the §7 clause in the sample corpus (data/dgca_car.txt). That clause is illustrative text
+# written for this demo, not an official DGCA clause. 120 m is also the green-zone ceiling
+# ("400 feet or 120 metre") in rule 3 of the Drone Rules, 2021, which is in data/regulations.
 DGCA_CEILING_REF = "CAR §7"
 
 
@@ -52,7 +55,7 @@ def _breach_reason(notam: Notam, plan: FlightPlan, distance: float) -> str:
 
 
 def validate_flight(plan: FlightPlan, notams: List[Notam]) -> ValidationResult:
-    """Evaluate one flight plan against the DGCA ceiling and the supplied NOTAMs.
+    """Evaluate one flight plan against the height ceiling and the supplied NOTAMs.
 
     Returns a violation with the references it relied on, plus any advisories and
     any restriction the parser could not evaluate. Unevaluable restrictions are
@@ -75,7 +78,7 @@ def validate_flight(plan: FlightPlan, notams: List[Notam]) -> ValidationResult:
     if plan.alt > settings.max_agl_m:
         return ValidationResult(
             violation=True,
-            reason=(f"DGCA {DGCA_CEILING_REF}: micro RPA ceiling {settings.max_agl_m}m AGL "
+            reason=(f"{DGCA_CEILING_REF}: height ceiling {settings.max_agl_m}m AGL "
                     f"breached at {plan.alt}m"),
             refs=[DGCA_CEILING_REF],
             advisories=advisories,

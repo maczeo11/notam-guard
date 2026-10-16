@@ -18,7 +18,7 @@ import { useFormErrors } from './lib/useFormErrors'
 const DEV = import.meta.env.DEV
 const GITHUB = 'https://github.com/maczeo11/notam-guard'
 
-/** DGCA CAR section 3 clause 7: the height limit for a micro drone. */
+/** The legal height limit: 400 ft or 120 m, the green-zone ceiling in rule 3 of the Drone Rules, 2021. */
 const LEGAL_LIMIT_M = 120
 
 /** How long to wait after the last change before checking again, so dragging does not send a request per pixel. */
@@ -260,7 +260,7 @@ export default function App() {
       <footer className="border-t border-ink-800 px-5 py-4">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-xs text-ink-500">
           <span>
-            A prototype on sample data (four DGCA clauses, three notices). Not for planning real flights.
+            A prototype on sample data (four illustrative clauses, three example notices). Not for planning real flights.
           </span>
           <a className="hover:text-ink-200 transition-colors font-mono focus-ring rounded"
              href={GITHUB}>github.com/maczeo11/notam-guard</a>

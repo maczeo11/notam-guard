@@ -161,7 +161,7 @@ export function DecisionPanel({ decision, approvedBy, loading, updating, invalid
       )}
 
       {decision.evidence?.length > 0 && (
-        <Disclosure title="Rules it relied on" hint="the official text behind the answer"
+        <Disclosure title="Rules it relied on" hint="the source text behind the answer"
                     count={decision.evidence.length} defaultOpen={!held}>
           {decision.evidence.map(item => (
             <div key={item.ref} className="bg-ink-850 border border-ink-800 rounded px-2.5 py-2 space-y-1">
@@ -171,7 +171,7 @@ export function DecisionPanel({ decision, approvedBy, loading, updating, invalid
                 </span>
                 <span className="font-mono text-xs text-ink-200 whitespace-nowrap">{item.ref}</span>
                 <span className="label sm:ml-auto">
-                  {item.grounded ? 'found in the official text' : 'not found in the official text'}
+                  {item.grounded ? 'found in the source text' : 'not found in the source text'}
                 </span>
               </div>
               {item.excerpt && <p className="text-xs leading-snug text-ink-400 pl-5">{item.excerpt}</p>}

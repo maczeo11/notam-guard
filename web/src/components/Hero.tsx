@@ -1,6 +1,6 @@
 const STEPS = [
   { title: 'Pick a flight', body: 'Choose an example below, or drag the pin on the map.' },
-  { title: 'The gate checks it', body: 'It tests the height and the place against the drone rules and any temporary limits.' },
+  { title: 'The gate checks it', body: 'It tests the height and the place against the height ceiling and any temporary notices.' },
   { title: 'You get a clear answer', body: 'Fly, do not fly, or a person must decide, with the rule it relied on.' },
 ]
 
@@ -15,7 +15,7 @@ export function Hero() {
         </h1>
         <p className="text-base text-ink-400 leading-relaxed">
           Some places have temporary flying limits, such as a crane that caps flights at 100 m.
-          NOTAM-Guard checks a planned flight against those limits and the national drone rules,
+          NOTAM-Guard checks a planned flight against those limits and the 120 m height ceiling in India’s drone rules,
           then tells you to <strong className="text-ink-200 font-medium">fly</strong>,{' '}
           <strong className="text-ink-200 font-medium">not fly</strong>, or{' '}
           <strong className="text-ink-200 font-medium">ask a person</strong>.

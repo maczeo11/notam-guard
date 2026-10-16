@@ -25,7 +25,7 @@ export const VERDICT_THEME: Record<Verdict, {
     border: 'border-emerald-900/70',
     bg: 'bg-emerald-950/40',
     dot: 'bg-emerald-400',
-    plain: 'No rule or restriction is broken, and the official text backs that up.',
+    plain: 'No rule or restriction is broken, and the source text backs that up.',
   },
   BLOCK: {
     label: 'BLOCK',
