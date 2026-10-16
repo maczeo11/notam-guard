@@ -34,7 +34,7 @@ The API is public and has no authentication, and `vercel.json` cannot add any: a
 |---|---|
 | Caddy path allow-list | Only `GET /health`, `GET /notams`, `POST /validate` and `POST /approve/T-XXXXXX` reach the app. `/docs`, `/openapi.json`, `/ticket/*`, `/drone/*/history` and every other method or path return 404 |
 | Input limits | `query` is capped at 500 characters, `drone_id` at 64, and `lat`, `lon` and `alt` have ranges. Larger input returns 422 |
-| Tickets stay in the process | `REDIS_URL` is empty on purpose, so a flood of requests cannot write into the Redis that serves another app. The memory cap restarts the service and clears the tickets |
+| Tickets in a capped DynamoDB table | Tickets live in a table with 5 read and 5 write units, reached through an instance role that can touch only that table. A flood is throttled instead of billed, and the verdict is still returned. `REDIS_URL` is empty on purpose, so a flood cannot write into the Redis that serves another app |
 | Resource caps | `MemoryMax=300M`, `TasksMax=64`, `NoNewPrivileges`, `ProtectSystem=strict` |
 | TLS end to end | The browser talks to Vercel over HTTPS, and Vercel talks to the VM over HTTPS |
 | Headers | Caddy removes `Server` and sets `nosniff` and `no-store`. `vercel.json` sets `nosniff`, `X-Frame-Options: DENY`, a strict referrer policy, a `Permissions-Policy` that turns off camera, microphone, location, payment and USB, and a Content-Security-Policy that allows scripts and styles only from the site itself (plus Google Fonts), map tiles only from OpenStreetMap, and API calls only to the same origin |
@@ -72,7 +72,7 @@ aws iam add-role-to-instance-profile --instance-profile-name notam-guard-vm --ro
 aws ec2 associate-iam-instance-profile --instance-id <instance id> --iam-instance-profile Name=notam-guard-vm
 ```
 
-**3. The service.** Add `Environment=TICKET_STORE=dynamodb`, `Environment=DYNAMODB_TABLE=notam-guard-tickets` and `Environment=AWS_REGION=<region>` to `notam-guard.service`, run `pip install -r deploy/requirements-vm.txt` (it now includes `boto3`), then `sudo systemctl daemon-reload && sudo systemctl restart notam-guard`. The start-up log line shows `tickets=dynamodb`. If the table or the role is wrong, the service logs an error and keeps tickets in the process instead of failing to start.
+**3. The service.** `notam-guard.service` in this folder already sets `TICKET_STORE=dynamodb`, `DYNAMODB_TABLE=notam-guard-tickets` and `AWS_REGION=ap-south-1`; change the region if yours differs. Run `pip install -r deploy/requirements-vm.txt` (it now includes `boto3`), copy the unit file to `/etc/systemd/system/`, then `sudo systemctl daemon-reload && sudo systemctl restart notam-guard`. The start-up log line shows `tickets=dynamodb`. If the table or the role is wrong, the service logs an error and keeps tickets in the process instead of failing to start.
 
 Things to know:
 

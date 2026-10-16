@@ -8,11 +8,16 @@ User=ubuntu
 WorkingDirectory=/home/ubuntu/notam-guard
 Environment=VECTOR_ADAPTER=memory
 Environment=LLM_ADAPTER=rule
-# Deliberately empty: tickets stay in this process. The endpoint is public and
-# unauthenticated, and the Redis on this box also serves another app, so a flood of
-# requests must not be able to write into it. If the service is flooded, the
-# MemoryMax below restarts it and clears the tickets. (An unreachable or empty
-# REDIS_URL makes the app fall back to in-process storage.)
+# Approval tickets live in DynamoDB. The VM's instance role (notam-guard-vm) can reach
+# only this table, and the table's 5/5 provisioned capacity throttles a flood instead of
+# billing it. If the table or the role is wrong, the app logs an error and keeps tickets
+# in the process rather than failing to start.
+Environment=TICKET_STORE=dynamodb
+Environment=DYNAMODB_TABLE=notam-guard-tickets
+Environment=AWS_REGION=ap-south-1
+# Deliberately empty: the Redis on this box also serves another app, and this endpoint is
+# public and unauthenticated, so a flood of requests must not be able to write into it.
+# An empty REDIS_URL keeps the per-drone history in the process.
 Environment=REDIS_URL=
 Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/home/ubuntu/notam-guard/.venv/bin/uvicorn src.app:app --host 127.0.0.1 --port 8001
