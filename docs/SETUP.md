@@ -29,9 +29,12 @@ python -m src.ingest --docs "data/dgca_car.txt" "data/notams/*.txt"
 ```
 
 `ingest` embeds with `bge-small-en-v1.5` (~80MB on first run) and writes to
-`sop_chunks`. It raises on failure rather than falling back, because a service
-pointed at an empty table would `HOLD` every flight without saying why. Use
-`--dry-run` to write `data/chunks.json` and skip the database.
+`sop_chunks`. It cuts one chunk per line by default (`--strategy lines`), because the
+corpus is written one clause or one NOTAM per line and a citation refers to that unit;
+that gives the same 8 chunks the in-memory store uses. `--strategy words` cuts fixed
+word windows for prose that is not line-structured. It raises on failure rather than
+falling back, because a service pointed at an empty table would `HOLD` every flight
+without saying why. Use `--dry-run` to write `data/chunks.json` and skip the database.
 
 Then `http://localhost:8000/docs` for the API, `http://localhost:5173` for the map UI.
 
@@ -105,13 +108,18 @@ curl -X POST http://localhost:8000/approve/T-XXXXXX \
 Repeat the `validate` call — the same ticket id comes back rather than a second
 ticket, for 24 hours.
 
-To see a decision change with time, pass `scheduled_for`. NOTAM 09/03 expires
-2026-09-10, so the same plan is `BLOCK` before it and `ALLOW` after:
+To see a decision change with time, pass `scheduled_for`. The sample NOTAM 09/03 is in
+force until 2027-12-31, so the same plan is `BLOCK` before that and `ALLOW` after:
 
 ```bash
 curl -X POST http://localhost:8000/validate -H "Content-Type: application/json" \
-  -d '{"lat":18.53,"lon":73.84,"alt":120,"drone_id":"D12","scheduled_for":"2026-09-15T12:00:00Z"}'
+  -d '{"lat":18.53,"lon":73.84,"alt":120,"drone_id":"D12","scheduled_for":"2028-01-15T12:00:00Z"}'
 ```
+
+The sample windows are fictional and set far enough ahead that the demo keeps behaving
+as documented. `tests/test_sample_data.py` fails 60 days before they lapse, so the demo
+cannot silently change again. To extend them, edit the dates in `data/notams/` and keep
+the evaluation instant in `src/eval.py` inside them.
 
 ## Adding NOTAMs
 
@@ -128,4 +136,6 @@ Re-run `src.ingest` so retrieval sees the new text too.
 | `RetrievalUnavailable: vector store returned no chunks` | Run `python -m src.ingest`. |
 | `Redis unavailable … using in-process memory` | Expected without Docker; tickets and history become process-local. |
 | Confidence is 0.85 instead of 1.0 on a clear flight | NOTAM 09/04 has no coordinates and cannot be evaluated. Working as designed. |
-| `ModuleNotFoundError: langgraph` | The sequential fallback runs instead; install it for the real state machine. |
+| `ModuleNotFoundError: langgraph` | It is a hard dependency with no fallback runner. `pip install -r requirements.txt`. |
+| Every flight is `HOLD` with "nothing was retrieved to ground it" | The plan took the `act` route (no regulatory wording in `query`). Mention the rule or NOTAM in `query`, or use the default query. |
+| `test_sample_data.py` fails | The sample NOTAM windows are about to lapse. Extend the dates in `data/notams/`. |

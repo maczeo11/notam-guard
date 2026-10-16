@@ -11,7 +11,7 @@ or `HOLD`, with the regulation it relied on and the retrieved text that supports
   <img src="https://img.shields.io/badge/LangGraph-7B5EFF?style=flat-square" alt="langgraph">
   <img src="https://img.shields.io/badge/pgvector-384d-FF6B6B?style=flat-square" alt="pgvector">
   <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square" alt="redis">
-  <img src="https://img.shields.io/badge/tests-72%20passing-3fb950?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/tests-126%20passing-3fb950?style=flat-square" alt="tests">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="license">
 </p>
 
@@ -27,11 +27,14 @@ NOTAM-Guard is built around three constraints instead.
 **The language model never decides.** Verdicts come from
 [`src/tools.py`](src/tools.py) — haversine distance against parsed NOTAM circles and
 the DGCA §7 ceiling. The LLM routes the request and writes the sentence a human
-reads. It cannot turn a `BLOCK` into an `ALLOW`, because it is never asked.
+reads. It cannot turn a `BLOCK` into an `ALLOW`, because it is never asked. It also
+cannot clear a flight by routing around a check: a plan that was never validated, or
+that nothing was retrieved to ground, is held outright, not merely marked down.
 
 **Every citation must be shown, not asserted.** The validator names the rule it
-applied; [`src/core/citations.py`](src/core/citations.py) then checks that reference
-actually appears in a retrieved chunk. A citation that cannot be found is marked
+applied; the retriever fetches that rule by name, and
+[`src/core/citations.py`](src/core/citations.py) checks that a retrieved chunk
+*defines* it, not merely mentions it. A citation that cannot be found is marked
 `grounded: false` and the flight is held. The API returns the supporting excerpt so
 the operator can check the reasoning rather than trust it.
 
@@ -46,11 +49,11 @@ silently dropped.
 ```mermaid
 flowchart LR
   A[POST /validate] --> R{router}
-  R -->|retrieve / both| RET[retriever<br/>pgvector top-k]
-  R -->|act| VAL[validator<br/>haversine + §7]
-  RET -->|both| VAL
-  RET -->|retrieve| SAF
-  VAL --> SAF[safety<br/>ground · gate · ticket]
+  R -->|retrieve| RET[retriever<br/>top-k + rule lookup]
+  R -->|act / both| VAL[validator<br/>haversine + §7]
+  VAL -->|both| RET
+  VAL -->|act| SAF
+  RET --> SAF[safety<br/>ground · gate · ticket]
   SAF --> RES[responder<br/>renders the sentence]
   RES --> END([ALLOW / BLOCK / HOLD])
 ```
@@ -58,7 +61,9 @@ flowchart LR
 The router's choice is a real branch in the LangGraph state machine
 (`add_conditional_edges`), so a plain flight plan with no regulatory question takes
 the `act` route and skips retrieval — and is then **held**, because a flight nothing
-was checked against has not been cleared.
+was checked against has not been cleared. The `retrieve` route skips the validator and
+is held for the same reason. On the `both` route the validator runs first so the
+retriever knows which rules to fetch.
 
 `safety` is the only node that sets a verdict, and it runs before `responder`, so the
 rendered text always describes a decision that was already final.
@@ -73,9 +78,11 @@ rendered text always describes a decision that was already final.
 
 Confidence starts at 1.0 for a clean deterministic result and is reduced by named
 defects: −0.15 per restriction that could not be evaluated, −0.40 per ungrounded
-citation. Below 0.75 an `ALLOW` becomes a `HOLD`. A `BLOCK` is never downgraded —
-blocking is the safe direction — but it always reaches a human, because refusing a
-mission has a cost too. The policy is one function:
+citation, −0.40 when nothing was retrieved. Below 0.75 an `ALLOW` becomes a `HOLD`.
+Two conditions hold the flight *whatever the number says*: no flight plan was
+validated, or nothing was retrieved to ground the verdict. A `BLOCK` is never
+downgraded — blocking is the safe direction — but it always reaches a human, because
+refusing a mission has a cost too. The policy is one function:
 [`src/core/safety.py`](src/core/safety.py).
 
 ## Quickstart
@@ -87,7 +94,7 @@ pip install -r requirements-dev.txt
 cp .env.example .env
 
 # Runs with no infrastructure: lexical retrieval, rule-based router, in-process memory.
-VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 72 passing
+VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 126 passing, 1 skipped (live Redis)
 VECTOR_ADAPTER=memory LLM_ADAPTER=rule python src/eval.py
 ```
 
@@ -143,7 +150,7 @@ what the backend matched on — not a re-implementation that could drift.
 **Confidence against the gate.** The meter draws the 0.75 threshold on the
 scale, so the safety policy is legible without reading
 [`core/safety.py`](src/core/safety.py). A clear flight sits at 0.85, visibly
-above the line; a flight nothing was checked against sits at 0.70, visibly below
+above the line; a flight nothing was checked against sits at 0.45, visibly below
 it, and is held.
 
 **Not assessed.** Restrictions the parser could not evaluate — NOTAM 09/04
@@ -158,7 +165,7 @@ return, so the whole behaviour is three clicks away:
 | Crane breach | `BLOCK` 0.80 | Cited, grounded, ticketed, held |
 | Clear flight | `ALLOW` 0.85 | Cleared — but not at 1.0, and the meter shows why |
 | Advisory zone | `ALLOW` 0.85 | An advisory NOTAM is reported, never auto-blocks |
-| Unchecked plan | `HOLD` 0.70 | Clear geometry, `act` route, nothing retrieved — held anyway |
+| Unchecked plan | `HOLD` 0.45 | Clear geometry, `act` route, nothing retrieved — held anyway |
 
 Colour in the interface means verdict state and nothing else; no other element
 is saturated. NOTAM circles are drawn only for records the parser could place,
@@ -203,7 +210,7 @@ src/
 ├── app.py                 # FastAPI
 ├── ingest.py              # corpus → pgvector
 └── eval.py                # scores the golden set
-tests/                     # 72 tests, no infrastructure required
+tests/                     # 126 tests, no infrastructure required
 web/src/
 ├── components/
 │   ├── DecisionPanel.tsx  # verdict, evidence, retrieved chunks, human gate
@@ -231,30 +238,39 @@ they do not, and [docs/SETUP.md](docs/SETUP.md) for configuration.
   cases                    16
   routing_accuracy         1.0
   verdict_accuracy         1.0
-  retrieval_hit_rate       1.0
+  retrieval_hit_rate       0.857
   grounded_citation_rate   1.0
   held_for_human           2
-  p50_ms                   2.3
+  p50_ms                   ~3
 ```
 
 Four separate numbers, because a perfect verdict score would otherwise hide a
 retriever that returns nothing useful. **Read [docs/EVAL.md](docs/EVAL.md) before
 quoting these** — verdict accuracy scores deterministic arithmetic against a golden
 set built from the same thresholds, so it is a regression check on boundary
-behaviour, not evidence about the retrieval. The corpus is 8 chunks; the retrieval
-number will not survive contact with a real one.
+behaviour, not evidence about the retrieval. `retrieval_hit_rate` scores similarity
+search alone and is 0.857 on purpose: the lexical retriever misses the §7 clause on
+2 of 14 queries, and the gate recovers it by fetching cited rules by identifier. The
+corpus is 8 chunks; the retrieval number will not survive contact with a real one.
 
 ## Limitations
 
-- The corpus is a 5-clause DGCA extract and 3 NOTAMs. Nothing here has been tested at
-  realistic scale.
+- The corpus is a four-clause DGCA extract (§7, §8, §9, §12) and 3 NOTAMs. Nothing here
+  has been tested at realistic scale. The sample NOTAM windows are fictional and run to
+  2027-12-31; a test fails 60 days before they lapse.
 - The NOTAM parser handles the shapes in `data/notams/`. Real NOTAM formats (ICAO Q-codes,
   schedule expressions like `0600-1800 UTC daily`) are not implemented — recurring
   daily windows are currently treated as active for the whole date range.
 - `InMemoryVectorAdapter` is IDF-weighted lexical overlap, not embeddings. It exists so
   the pipeline runs without Postgres; the pgvector adapter is the real path.
 - Terrain, weather, airspace class and other traffic are not modelled.
-- No authentication. Not deployed anywhere.
+- No authentication. `/approve` takes any caller and a self-asserted approver name.
+  This is a prototype, not a production deployment.
+- `PgVectorAdapter` is tested against a fake connection, and the Redis adapters against
+  `fakeredis`. Neither has been exercised in CI against a live Postgres or Redis
+  (set `REDIS_TEST_URL` to run the Redis check against a real server).
+- Retrieval uses the request's free-text `query` for similarity; only the rules the
+  validator applied are fetched by name.
 
 ## License
 
