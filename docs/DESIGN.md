@@ -57,7 +57,7 @@ flowchart TD
   GRAPH -.->|"optional"| LS["LangSmith"]
 ```
 
-A FastAPI service wraps a five-node LangGraph state machine. The graph reads two kinds of data. Parsed NOTAMs, read from text files, drive the verdict. Regulation text, held in a vector store, is used only to ground citations. Tickets for held and blocked flights, and each drone's recent ticket history, live in Redis.
+A FastAPI service wraps a five-node LangGraph state machine. The graph reads two kinds of data. Parsed NOTAMs, read from text files, drive the verdict. Regulation text, held in a vector store, is used only to ground citations. Tickets for held and blocked flights, and each drone's recent ticket history, live in Redis. Tickets can instead live in DynamoDB (`TICKET_STORE=dynamodb`).
 
 | Component | What it does | Needed? |
 |---|---|---|
@@ -207,6 +207,7 @@ The rule is that retrieval may not degrade quietly, while the other dependencies
 | A NOTAM's dates cannot be parsed | Treated as active, because failing to read a window must not retire a restriction |
 | LLM provider fails or returns an unusable route | The rule-based adapter takes over. The verdict is unaffected |
 | Redis unreachable | Tickets and history become process-local, with a warning. Dedupe then stops spanning processes |
+| DynamoDB refuses or throttles a ticket write | `TicketStoreUnavailable`. The verdict is returned unchanged with a warning and no ticket, so the flight stays held, and `/approve` returns 503. If the table cannot be reached at start, tickets become process-local, with an error in the log |
 | Tracing key missing or a placeholder | Tracing is switched off with one warning |
 
 ## 8. Design decisions
@@ -223,7 +224,7 @@ The rule is that retrieval may not degrade quietly, while the other dependencies
 
 **Ports with real and in-process adapters.** Every port has two implementations. Tests inject the in-process ones, which is why 126 tests run in a few seconds with nothing installed. The cost is a small composition root (`core/container.py`) that every consumer must go through.
 
-**First approval wins.** Closing the human gate twice should not rewrite who closed it. Approval runs under a Redis `WATCH` transaction, returns an already-approved ticket unchanged, and keeps the ticket's expiry.
+**First approval wins.** Closing the human gate twice should not rewrite who closed it. Approval runs under a Redis `WATCH` transaction (or one conditional update in DynamoDB), returns an already-approved ticket unchanged, and keeps the ticket's expiry.
 
 **Sample windows are pinned, and a test watches them.** NOTAMs have validity windows, so sample data that is in force today stops being in force later. That happened: the demo's headline case silently changed from `BLOCK` to `ALLOW` while the documentation still described the old result. The windows now run well ahead, and a test fails 60 days before they end.
 
@@ -267,7 +268,7 @@ Sixteen cases over eight chunks is a smoke test, not an evaluation. A real one n
 - Tickets are deduplicated on the day the request is made, not on `scheduled_for`.
 - Similarity search uses the request's free-text query. Only the rules the validator applied are fetched by name, and the lexical retriever is weak on identifiers.
 - `PgVectorAdapter.lookup` narrows with `ILIKE`, which scans the table. That is fine at this size. A larger corpus should store each chunk's defined reference in an indexed column.
-- Postgres is tested through a fake connection, and Redis through `fakeredis`. The Groq adapter has not been run against a live provider. None of this has run in CI against live services.
+- Postgres is tested through a fake connection, Redis through `fakeredis`, and DynamoDB through moto. The DynamoDB concurrency checks (50 simultaneous creates, 20 simultaneous approvals) have also been run by hand against a real table. The Groq adapter has not been run against a live provider. None of this has run in CI against live services.
 
 If the gate were put in front of an agent that proposes missions, the pieces to change are the NOTAM source (a live feed and a real parser), the altitude check (a terrain-aware AGL source), the approval step (authenticated, with an audit record), and the input (structured mission data, so free text stops steering routing and retrieval). The principle that a skipped check holds the flight matters more in that setting, not less, because an agent will call the gate more often and less carefully than a person at a form.
 
@@ -312,6 +313,7 @@ src/
     pgvector_adapter.py   PgVectorAdapter, InMemoryVectorAdapter
     redis_adapter.py      connect(), RedisMemoryAdapter, InMemoryMemoryAdapter
     ticket_adapter.py     RedisTicketAdapter, InMemoryTicketAdapter, dedupe_key
+    dynamodb_ticket_adapter.py   DynamoTicketAdapter, connect (TICKET_STORE=dynamodb)
     notam_repository.py   FileNotamRepository, InMemoryNotamRepository
     llm_adapter.py        RuleLLMAdapter, GroqLLMAdapter
 data/                     dgca_car.txt, notams/*.txt, test_queries.json, chunks.json
@@ -552,6 +554,8 @@ sequenceDiagram
 The in-process adapter gets the same exactly-once behaviour from a `threading.Lock` around check-and-insert.
 
 Approval is first-wins. In Redis it runs inside `transaction()`, which uses `WATCH`. It reads the record and returns it unchanged if it is already approved. Otherwise it sets `status`, `approved_by` and `approved_at` and writes with `keepttl`, so approving never makes a ticket permanent. If two approvers race, one commits and the other retries, sees `approved`, and returns the first approver.
+
+`DynamoTicketAdapter` keeps the same two guarantees with conditional writes, which DynamoDB evaluates atomically on the item. The table has one partition key `pk` and reuses the Redis key names: `ticket:dedupe:<hash>` points at a ticket id, and `ticket:<id>` holds the ticket. Creation reads the dedupe item first, because a read is cheaper than a failed conditional write, then writes both items in one `TransactWriteItems`. The dedupe item is written only if it is absent or expired, so there is no moment when the key is taken but the ticket is not written. A ticket id is six hex digits and can collide, so the ticket item is conditional as well. A collision cancels the transaction and a new id is drawn, instead of one ticket overwriting another. Approval is one `UpdateItem` that applies only while the ticket exists, is unexpired and is not `approved`. When the condition fails, the ticket is read back: absent means unknown, anything else was already approved and is returned unchanged. `expires_at` is never written, so approving cannot make a ticket permanent. DynamoDB's TTL deletes expired items lazily, up to a couple of days late, so every read and every condition compares `expires_at` with the clock instead of trusting TTL to have run.
 
 ```mermaid
 stateDiagram-v2

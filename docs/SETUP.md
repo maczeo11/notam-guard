@@ -48,6 +48,9 @@ Every variable is read in `src/core/config.py` and nowhere else.
 | `LLM_ADAPTER` | `groq` if `GROQ_API_KEY` else `rule` | `rule`, `groq` |
 | `DATABASE_URL` | `postgresql://notam:notam@localhost:5432/notam` | |
 | `REDIS_URL` | `redis://localhost:6379/0` | degrades to in-process if unreachable |
+| `TICKET_STORE` | `redis` | `redis` or `dynamodb`. Either degrades to in-process tickets if its backend is unreachable at start |
+| `DYNAMODB_TABLE` | `notam-guard-tickets` | table with partition key `pk` (string) and TTL on `expires_at`. See `deploy/README.md` |
+| `AWS_REGION` | boto3's own lookup | region of that table; credentials come from the usual AWS chain (instance role, profile) |
 | `NOTAM_DIR` | `data/notams` | corpus the parser reads |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | 384-dimensional |
 | `RETRIEVAL_K` | `3` | chunks per query |
@@ -135,6 +138,8 @@ Re-run `src.ingest` so retrieval sees the new text too.
 | Every flight returns `HOLD` with "retrieval unavailable" | Postgres is down or the corpus was never ingested. This is the intended fail-closed behaviour. |
 | `RetrievalUnavailable: vector store returned no chunks` | Run `python -m src.ingest`. |
 | `Redis unavailable … using in-process memory` | Expected without Docker; tickets and history become process-local. |
+| `DynamoDB table … unavailable … using in-process tickets` | `TICKET_STORE=dynamodb` but the table or credentials are missing. Tickets are process-local until fixed. |
+| A verdict says "approval ticket could not be opened" | DynamoDB refused or throttled the write. The verdict is unchanged and the flight stays held; approving returns 503 until the table recovers. |
 | Confidence is 0.85 instead of 1.0 on a clear flight | NOTAM 09/04 has no coordinates and cannot be evaluated. Working as designed. |
 | `ModuleNotFoundError: langgraph` | It is a hard dependency with no fallback runner. `pip install -r requirements.txt`. |
 | Every flight is `HOLD` with "nothing was retrieved to ground it" | The plan took the `act` route (no regulatory wording in `query`). Mention the rule or NOTAM in `query`, or use the default query. |

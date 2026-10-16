@@ -43,7 +43,7 @@ flowchart TD
   GRAPH -.->|"optional"| LS["LangSmith"]
 ```
 
-A FastAPI service wraps a five-node LangGraph state machine. The graph uses two kinds of data. Parsed NOTAMs, read from text files, drive the verdict. Regulation text, held in a vector store, is used only to show and check what the verdict relied on. Tickets for flights that need a person live in Redis.
+A FastAPI service wraps a five-node LangGraph state machine. The graph uses two kinds of data. Parsed NOTAMs, read from text files, drive the verdict. Regulation text, held in a vector store, is used only to show and check what the verdict relied on. Tickets for flights that need a person live in Redis, or in DynamoDB when `TICKET_STORE=dynamodb`.
 
 | Component | Role | If it is missing |
 |---|---|---|
@@ -53,6 +53,7 @@ A FastAPI service wraps a five-node LangGraph state machine. The graph uses two 
 | NOTAM files | The airspace restrictions the verdict is computed from | Flight is held |
 | Vector store | Regulation text for grounding citations | Flight is held. An in-memory store can be chosen instead by configuration, but there is no automatic fallback |
 | Redis | Idempotent tickets and per-drone history | Falls back to in-process storage |
+| DynamoDB (optional) | Idempotent tickets, instead of Redis | Falls back to in-process storage at start. A request it refuses returns the verdict with no ticket |
 | Groq LLM | Routing and wording | Falls back to a rule-based adapter |
 | LangSmith | Traces of each node | Off by default |
 
@@ -173,6 +174,7 @@ Retrieval may not degrade quietly. Redis, the LLM and tracing may, because they 
 | A NOTAM's dates cannot be parsed | Treated as active, so a restriction is never dropped by accident |
 | LLM provider fails | The rule-based adapter takes over. The verdict is unaffected |
 | Redis unreachable | Tickets become process-local, with a warning |
+| DynamoDB refuses or throttles a ticket write | The verdict is returned unchanged with a warning and no ticket, so the flight stays held. `/approve` returns 503 until it recovers |
 
 ## 7. Design decisions
 
@@ -184,7 +186,7 @@ Retrieval may not degrade quietly. Redis, the LLM and tracing may, because they 
 
 **Retrieval and the gate are measured separately.** The evaluation scores similarity search on its own (0.857) and the full gate (1.0). Folding the lookup into the first number would hide the retriever's weakness.
 
-**First approval wins.** Closing the human gate twice should not change who closed it. Approval runs under a Redis `WATCH` transaction and keeps the ticket's expiry.
+**First approval wins.** Closing the human gate twice should not change who closed it. Approval runs under a Redis `WATCH` transaction, or as one conditional update in DynamoDB, and keeps the ticket's expiry.
 
 ## 8. Deployment
 
@@ -196,7 +198,7 @@ The service runs in two modes. With `VECTOR_ADAPTER=memory` and `LLM_ADAPTER=rul
 - Real NOTAM formats and recurring daily windows are not parsed.
 - Terrain, weather and other traffic are not modelled. Altitude is assumed to be above ground level.
 - The approval step has no authentication.
-- Postgres and Redis are tested through fakes, and the Groq adapter has not been run against a live provider.
+- Postgres and Redis are tested through fakes. The DynamoDB store is tested with moto, and its concurrency checks have been run against a real table. The Groq adapter has not been run against a live provider.
 
 ---
 
@@ -243,11 +245,11 @@ web/src/              React and TypeScript interface
 |---|---|---|---|
 | `VectorStorePort` | `PgVectorAdapter` | `InMemoryVectorAdapter` | `search(query, k)` and `lookup(refs)`. Must raise on failure, never return placeholder text |
 | `NotamRepositoryPort` | `FileNotamRepository` | `InMemoryNotamRepository` | NOTAMs in force at a given time |
-| `TicketPort` | `RedisTicketAdapter` | `InMemoryTicketAdapter` | Exactly one ticket per drone, NOTAM and day. First approval wins |
+| `TicketPort` | `RedisTicketAdapter` or `DynamoTicketAdapter` | `InMemoryTicketAdapter` | Exactly one ticket per drone, NOTAM and day. First approval wins |
 | `MemoryPort` | `RedisMemoryAdapter` | `InMemoryMemoryAdapter` | A drone's last five tickets |
 | `LLMPort` | `GroqLLMAdapter` | `RuleLLMAdapter` | `route` returns a route; `respond` words a sentence and never changes the verdict |
 
-`core/container.py` picks the implementation once per process from configuration, and falls back to in-memory storage when Redis is unreachable. Tests swap in their own implementations through `container.override(...)`.
+`core/container.py` picks the implementation once per process from configuration, and falls back to in-memory storage when Redis, or the DynamoDB table, is unreachable. Tests swap in their own implementations through `container.override(...)`.
 
 ## 13. Graph nodes
 
@@ -299,7 +301,7 @@ if nothing retrieved or confidence < 0.75:   HOLD
 otherwise:                                   ALLOW
 ```
 
-**Tickets** (`adapters/ticket_adapter.py`): the dedupe key is a hash of the drone id, the NOTAM id and the date. Creation is one atomic Redis `SET key id NX EX ttl`, so when several processes race, exactly one creates the ticket and the rest receive its id. Approval is a read-check-write inside a `WATCH` transaction: an already-approved ticket is returned unchanged, and the write keeps the existing expiry.
+**Tickets** (`adapters/ticket_adapter.py`): the dedupe key is a hash of the drone id, the NOTAM id and the date. Creation is one atomic Redis `SET key id NX EX ttl`, so when several processes race, exactly one creates the ticket and the rest receive its id. Approval is a read-check-write inside a `WATCH` transaction: an already-approved ticket is returned unchanged, and the write keeps the existing expiry. `DynamoTicketAdapter` gives the same guarantees with conditional writes: creation is one transaction that takes the dedupe item and writes the ticket, and approval is one update that applies only while the ticket is not yet approved. It checks `expires_at` itself on every read, because DynamoDB's TTL deletes expired items lazily, up to a couple of days late.
 
 **Retrieval** (`adapters/pgvector_adapter.py`): similarity search orders chunks by cosine distance to the query embedding (`bge-small-en-v1.5`, 384 dimensions). The lookup narrows candidates with a parameterised `ILIKE` and then applies the grounding rule in Python, so a chunk that only mentions `§7` is not returned as §7. Any database error is raised as a retrieval failure, which holds the flight.
 

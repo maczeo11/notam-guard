@@ -62,7 +62,7 @@ Five ports in `src/core/ports.py`, resolved through `src/core/container.py`:
 |---|---|---|
 | `VectorStorePort` (`search`, `lookup`) | `PgVectorAdapter` | `InMemoryVectorAdapter` (IDF lexical) |
 | `MemoryPort` | `RedisMemoryAdapter` | `InMemoryMemoryAdapter` |
-| `TicketPort` | `RedisTicketAdapter` (`SET NX`) | `InMemoryTicketAdapter` (lock) |
+| `TicketPort` | `RedisTicketAdapter` (`SET NX`) or `DynamoTicketAdapter` (conditional writes), chosen by `TICKET_STORE` | `InMemoryTicketAdapter` (lock) |
 | `NotamRepositoryPort` | `FileNotamRepository` | `InMemoryNotamRepository` |
 | `LLMPort` | `GroqLLMAdapter` | `RuleLLMAdapter` |
 
@@ -147,6 +147,20 @@ write, and approving an already-approved ticket returns it unchanged. The write 
 the ticket's TTL. The approver is a self-asserted string, since the API has no
 authentication.
 
+`DynamoTicketAdapter` (`TICKET_STORE=dynamodb`) gives the same two guarantees with
+conditional writes, which DynamoDB evaluates atomically on the item. Creation is one
+transaction that takes the dedupe item and writes the ticket together, so there is no
+window between "key taken" and "ticket written". Approval is one `UpdateItem` that only
+applies while the ticket exists, is unexpired and is not yet approved. Two details come
+from DynamoDB itself. Its TTL deletes expired items lazily, up to a couple of days late,
+so the adapter checks `expires_at` on every read and condition instead of trusting TTL
+to have run. A ticket id is six hex digits and can collide, so the ticket write is
+conditional too and a collision draws a new id instead of overwriting another ticket.
+`tests/test_dynamodb_tickets.py` covers this with moto and runs 50 concurrent creates and
+20 concurrent approvals against a real table when `DYNAMODB_TEST_TABLE` is set.
+A table that throttles or cannot be reached raises `TicketStoreUnavailable`: the verdict
+is returned unchanged with a warning and no ticket, and `/approve` answers 503.
+
 ## Failure modes
 
 | Failure | Response |
@@ -162,6 +176,8 @@ authentication.
 | NOTAM with unparseable dates | treated as **active** — failing to read a window must not retire a restriction |
 | LLM provider down | `RuleLLMAdapter` fallback; verdict is unaffected because the LLM never set it |
 | Redis down | in-process memory and tickets; logged as a warning |
+| DynamoDB table missing at start | in-process tickets; logged as an error |
+| DynamoDB throttles or fails on a request | verdict unchanged, no ticket, a warning is added; `/approve` returns 503 |
 
 ## Observability
 

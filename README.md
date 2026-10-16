@@ -94,7 +94,7 @@ pip install -r requirements-dev.txt
 cp .env.example .env
 
 # Runs with no infrastructure: lexical retrieval, rule-based router, in-process memory.
-VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 126 passing, 1 skipped (live Redis)
+VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 143 passing, 3 skipped (live Redis, live DynamoDB)
 VECTOR_ADAPTER=memory LLM_ADAPTER=rule python src/eval.py
 ```
 
@@ -266,9 +266,10 @@ corpus is 8 chunks; the retrieval number will not survive contact with a real on
 - Terrain, weather, airspace class and other traffic are not modelled.
 - No authentication. `/approve` takes any caller and a self-asserted approver name.
   This is a prototype, not a production deployment.
-- `PgVectorAdapter` is tested against a fake connection, and the Redis adapters against
-  `fakeredis`. Neither has been exercised in CI against a live Postgres or Redis
-  (set `REDIS_TEST_URL` to run the Redis check against a real server).
+- `PgVectorAdapter` is tested against a fake connection, the Redis adapters against
+  `fakeredis`, and the DynamoDB ticket store against moto. None has been exercised in CI
+  against a live service. Set `REDIS_TEST_URL` or `DYNAMODB_TEST_TABLE` to run the
+  concurrency checks against a real Redis or a real table.
 - Retrieval uses the request's free-text `query` for similarity; only the rules the
   validator applied are fetched by name.
 

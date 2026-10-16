@@ -42,3 +42,40 @@ The API is public and has no authentication, and `vercel.json` cannot add any: a
 What this does **not** do: it cannot prove that a request came from the Vercel site, because anyone can call the public address directly. The only data is sample data, so that is acceptable here. A shared secret added by a Vercel function would close that gap, at the cost of a second moving part.
 
 It runs in memory mode (`VECTOR_ADAPTER=memory`, `LLM_ADAPTER=rule`), so it needs no Postgres, no embedding model and no API key. The verdict logic is identical to the full stack.
+
+## Optional: keep tickets in DynamoDB
+
+By default tickets live in the process and are lost on a restart. To keep them in DynamoDB instead, with the code in `src/adapters/dynamodb_ticket_adapter.py`:
+
+**1. The table.** Provisioned at 5 read and 5 write units, so a flood of requests is throttled instead of billed, and the table stays inside DynamoDB's always-free allowance. Expiry is a TTL attribute named `expires_at`.
+
+```bash
+aws dynamodb create-table --table-name notam-guard-tickets \
+  --attribute-definitions AttributeName=pk,AttributeType=S --key-schema AttributeName=pk,KeyType=HASH \
+  --billing-mode PROVISIONED --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+aws dynamodb wait table-exists --table-name notam-guard-tickets
+aws dynamodb update-time-to-live --table-name notam-guard-tickets \
+  --time-to-live-specification Enabled=true,AttributeName=expires_at
+```
+
+**2. A role for the VM that can reach only that table.** No access keys are stored on the VM; it uses an instance profile.
+
+```bash
+ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+REGION=<region of the table>
+aws iam create-role --role-name notam-guard-vm --assume-role-policy-document \
+  '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+aws iam put-role-policy --role-name notam-guard-vm --policy-name notam-guard-tickets-table --policy-document \
+  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"dynamodb:GetItem\",\"dynamodb:PutItem\",\"dynamodb:UpdateItem\",\"dynamodb:DescribeTable\"],\"Resource\":\"arn:aws:dynamodb:$REGION:$ACCOUNT:table/notam-guard-tickets\"}]}"
+aws iam create-instance-profile --instance-profile-name notam-guard-vm
+aws iam add-role-to-instance-profile --instance-profile-name notam-guard-vm --role-name notam-guard-vm
+aws ec2 associate-iam-instance-profile --instance-id <instance id> --iam-instance-profile Name=notam-guard-vm
+```
+
+**3. The service.** Add `Environment=TICKET_STORE=dynamodb`, `Environment=DYNAMODB_TABLE=notam-guard-tickets` and `Environment=AWS_REGION=<region>` to `notam-guard.service`, run `pip install -r deploy/requirements-vm.txt` (it now includes `boto3`), then `sudo systemctl daemon-reload && sudo systemctl restart notam-guard`. The start-up log line shows `tickets=dynamodb`. If the table or the role is wrong, the service logs an error and keeps tickets in the process instead of failing to start.
+
+Things to know:
+
+- Any process on the VM can use that role through the instance metadata service (IMDSv2 is required). That is why it is limited to one table and four actions.
+- At 5 write units the table takes about one new ticket per second once its burst allowance is spent. A repeat for the same drone, NOTAM and day is answered by a read and writes nothing, so normal use stays far below that. Over the limit, requests are throttled: the verdict is still returned, without a ticket, and `/approve` answers 503.
+- Tickets expire after 24 hours, and DynamoDB deletes them lazily after that, so the table does not grow without bound.
