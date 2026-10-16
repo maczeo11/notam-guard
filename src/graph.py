@@ -2,11 +2,16 @@
 
     router ─┬─ retrieve ─→ retriever ─────────────→ safety → responder → END
             ├─ act ──────────────────→ validator ─→ safety → responder → END
-            └─ both ────→ retriever ─→ validator ─→ safety → responder → END
+            └─ both ────→ validator ─→ retriever ─→ safety → responder → END
 
 The router's choice is a real branch, taken through `add_conditional_edges` —
 not a value computed and then ignored. The verdict is produced by `safety`, which
 runs before `responder`, so the LLM renders a decision it cannot influence.
+
+On the `both` route the validator runs first, so the retriever can ask for the
+text of the rules the validator actually applied (see `_retrieval_query`). A route
+that skips a check does not clear the flight: `safety` holds anything that was not
+validated, and anything nothing was retrieved to ground.
 """
 
 from typing import List, TypedDict
@@ -80,10 +85,18 @@ def router(state: State) -> dict:
 
 @traced("retriever")
 def retriever(state: State) -> dict:
+    """Similarity search for context, plus an exact lookup of the rules applied.
+
+    Grounding only counts a reference where a retrieved chunk defines it. Similarity
+    search ranks by meaning and an identifier like `§7` carries almost none, so the
+    rules the validator applied are fetched by name (`lookup`) and listed first.
+    """
     started = time.perf_counter()
+    store = container.get_vector_store()
     try:
-        chunks = container.get_vector_store().search(
-            state.get("query", ""), k=get_settings().retrieval_k)
+        context = store.search(state.get("query", ""), k=get_settings().retrieval_k)
+        defining = store.lookup(state.get("refs") or [])
+        chunks = defining + [c for c in context if c not in defining]
     except RetrievalUnavailable as exc:
         # Fail closed: no fabricated chunks, no ALLOW built on them.
         log.error("retrieval unavailable: %s", exc)
@@ -125,17 +138,14 @@ def safety(state: State) -> dict:
     warnings = list(state.get("warnings") or [])
     retrieved = state.get("retrieved") or []
 
-    if not state.get("validated") and not state.get("retrieval_failed"):
-        warnings.append("no flight plan was validated on this route — nothing cleared")
-    if state.get("action") == Action.ACT.value and not retrieved:
-        warnings.append("verdict not cross-checked against the retrieved corpus (route=act)")
-
     citations = ground(state.get("refs") or [], retrieved) if retrieved else []
     outcome = finalise(
         violation=bool(state.get("violation")),
         citations=citations,
         warnings=warnings,
         retrieval_failed=bool(state.get("retrieval_failed")),
+        validated=bool(state.get("validated")),
+        cross_checked=bool(retrieved),
     )
 
     update: dict = {
@@ -180,12 +190,15 @@ def responder(state: State) -> dict:
 
 
 def _after_router(state: State) -> str:
+    """`retrieve` goes straight to the retriever; `act` and `both` validate first."""
     action = state.get("action", Action.BOTH.value)
-    return "retriever" if action in (Action.RETRIEVE.value, Action.BOTH.value) else "validator"
+    return "retriever" if action == Action.RETRIEVE.value else "validator"
 
 
-def _after_retriever(state: State) -> str:
-    return "validator" if state.get("action") == Action.BOTH.value else "safety"
+def _after_validator(state: State) -> str:
+    """Only the `both` route retrieves after validating; `act` goes to safety."""
+    action = state.get("action", Action.BOTH.value)
+    return "retriever" if action == Action.BOTH.value else "safety"
 
 
 def build_graph():
@@ -201,9 +214,9 @@ def build_graph():
     builder.set_entry_point("router")
     builder.add_conditional_edges("router", _after_router,
                                   {"retriever": "retriever", "validator": "validator"})
-    builder.add_conditional_edges("retriever", _after_retriever,
-                                  {"validator": "validator", "safety": "safety"})
-    builder.add_edge("validator", "safety")
+    builder.add_conditional_edges("validator", _after_validator,
+                                  {"retriever": "retriever", "safety": "safety"})
+    builder.add_edge("retriever", "safety")
     builder.add_edge("safety", "responder")
     builder.add_edge("responder", END)
     return builder.compile()

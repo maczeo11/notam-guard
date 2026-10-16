@@ -5,12 +5,13 @@ Both adapters fail closed: if the corpus cannot be searched they raise
 version caught every exception and returned two hardcoded chunks, which meant a
 dead database still produced a confident ALLOW with fabricated citations.
 """
-from typing import List
+from typing import List, Sequence
 import logging
 import math
 import re
 
 from src.core.chunking import chunk_lines
+from src.core.citations import find_definition, needle
 from src.core.config import REPO_ROOT, get_settings
 from src.core.errors import RetrievalUnavailable
 from src.core.ports import VectorStorePort
@@ -18,6 +19,22 @@ from src.core.ports import VectorStorePort
 log = logging.getLogger(__name__)
 
 _TOKEN = re.compile(r"[a-z0-9§/.]+")
+
+
+def _defining(refs: Sequence[str], chunks: Sequence[str]) -> List[str]:
+    """The chunks, in order and without repeats, that define at least one reference."""
+    seen, found = set(), []
+    for chunk in chunks:
+        if chunk not in seen and any(find_definition(ref, chunk) is not None for ref in refs):
+            seen.add(chunk)
+            found.append(chunk)
+    return found
+
+
+def _like_pattern(text: str) -> str:
+    """A LIKE pattern matching `text` literally anywhere (backslash is Postgres's default escape)."""
+    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
 
 
 class PgVectorAdapter(VectorStorePort):
@@ -58,6 +75,26 @@ class PgVectorAdapter(VectorStorePort):
             raise RetrievalUnavailable("vector store returned no chunks — corpus not ingested?")
         return rows
 
+    def lookup(self, refs: Sequence[str]) -> List[str]:
+        """Fetch the chunks that define each reference. SQL narrows to chunks that
+        contain the reference text; `find_definition` then applies the exact rule,
+        so a chunk that merely mentions `§7` is not returned as if it were §7."""
+        if not refs:
+            return []
+        candidates: List[str] = []
+        try:
+            conn = self._get_conn()
+            with conn.cursor() as cur:
+                for ref in refs:
+                    cur.execute("SELECT chunk FROM sop_chunks WHERE chunk ILIKE %s",
+                                (_like_pattern(needle(ref)),))
+                    candidates.extend(row[0] for row in cur.fetchall())
+        except Exception as exc:
+            self._conn = None
+            log.error("reference lookup failed: %s", exc)
+            raise RetrievalUnavailable(str(exc)) from exc
+        return _defining(refs, candidates)
+
 
 class InMemoryVectorAdapter(VectorStorePort):
     """Lexical fallback over the same corpus files, so the pipeline and the eval
@@ -76,12 +113,14 @@ class InMemoryVectorAdapter(VectorStorePort):
     def _load_corpus() -> List[str]:
         settings = get_settings()
         chunks: List[str] = []
+        # utf-8-sig drops a leading byte-order mark, which would otherwise end up
+        # as an invisible first character of the first chunk in each file.
         car = REPO_ROOT / "data" / "dgca_car.txt"
         if car.is_file():
-            chunks.extend(chunk_lines(car.read_text(encoding="utf-8")))
+            chunks.extend(chunk_lines(car.read_text(encoding="utf-8-sig")))
         if settings.notam_dir.is_dir():
             for path in sorted(settings.notam_dir.glob("*.txt")):
-                chunks.extend(chunk_lines(path.read_text(encoding="utf-8")))
+                chunks.extend(chunk_lines(path.read_text(encoding="utf-8-sig")))
         return chunks
 
     def _build_idf(self) -> dict:
@@ -105,3 +144,6 @@ class InMemoryVectorAdapter(VectorStorePort):
             # a guess dressed as a result, so treat it as a retrieval miss.
             raise RetrievalUnavailable(f"no chunk matched query: {query!r}")
         return [chunk for _, chunk in scored[:k]]
+
+    def lookup(self, refs: Sequence[str]) -> List[str]:
+        return _defining(refs, self._chunks) if refs else []

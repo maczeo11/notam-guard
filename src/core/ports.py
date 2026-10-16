@@ -6,7 +6,7 @@ concrete adapter directly.
 """
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from .domain import Notam, Ticket
 
@@ -21,6 +21,20 @@ class VectorStorePort(ABC):
                 must raise rather than return a fallback — the caller decides the
                 safe response, and the safe response is not a fabricated chunk.
         """
+
+    def lookup(self, refs: Sequence[str]) -> List[str]:
+        """Chunks that *define* each reference, found by identifier, not similarity.
+
+        Similarity search ranks by meaning, and an identifier such as `§7` or
+        `09/03` carries almost none, so a query can rank the wrong chunks above the
+        clause that was applied. A rule the verdict cites is fetched by name.
+        Implementations decide what "define" means with `citations.find_definition`
+        and must raise `RetrievalUnavailable` if the store cannot be queried.
+
+        The default returns nothing: a store without exact lookup simply grounds
+        less, which fails closed.
+        """
+        return []
 
 
 class MemoryPort(ABC):

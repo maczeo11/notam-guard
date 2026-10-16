@@ -17,14 +17,18 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.core.config import REPO_ROOT  # noqa: E402
+from src.core import container  # noqa: E402
+from src.core.citations import ground  # noqa: E402
+from src.core.config import REPO_ROOT, get_settings  # noqa: E402
 from src.core.domain import FlightPlan, Verdict  # noqa: E402
+from src.core.errors import RetrievalUnavailable  # noqa: E402
 from src.graph import decide  # noqa: E402
 
 log = logging.getLogger(__name__)
 
-# NOTAM 09/03 is valid 2026-09-01 to 2026-09-10; the golden set is scored inside
-# that window so results do not change with the wall clock.
+# The golden set is scored at a fixed instant so results do not change with the wall
+# clock. It must fall inside the windows of the sample NOTAMs in data/notams/
+# (tests/test_sample_data.py checks that, and that the windows have not lapsed).
 EVAL_INSTANT = datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc)
 
 
@@ -53,12 +57,20 @@ def evaluate(cases: List[dict]) -> List[Row]:
         decision = decide(plan)
         elapsed = (time.perf_counter() - start) * 1000
 
+        # retrieval_ok measures *similarity search on its own*: did the top-k for this
+        # query include the chunk that defines the expected reference? The graph also
+        # fetches cited rules by identifier (`lookup`), which would make this number
+        # trivially 1.0 and hide a weak retriever, so it is deliberately not counted
+        # here. It is scored with the same rule the safety gate uses: the reference
+        # must be defined by the chunk, not merely mentioned in it.
         expected_citation = case.get("expected_citation")
-        if expected_citation and decision.retrieved:
-            retrieval_ok = any(expected_citation.split()[-1].lower() in chunk.lower()
-                               for chunk in decision.retrieved)
-        elif expected_citation:
-            retrieval_ok = False
+        if expected_citation:
+            try:
+                top_k = container.get_vector_store().search(
+                    case["query"], k=get_settings().retrieval_k)
+            except RetrievalUnavailable:
+                top_k = []
+            retrieval_ok = ground([expected_citation], top_k)[0].grounded
         else:
             retrieval_ok = None
 

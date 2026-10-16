@@ -8,12 +8,14 @@ from typing import List
 
 import pytest
 
+from src.adapters.llm_adapter import RuleLLMAdapter
+from src.adapters.notam_repository import InMemoryNotamRepository
 from src.core import container
 from src.core.domain import Action, FlightPlan, Verdict
-from src.core.errors import RetrievalUnavailable
-from src.core.ports import VectorStorePort
+from src.core.errors import NotamSourceUnavailable, RetrievalUnavailable
+from src.core.ports import NotamRepositoryPort, VectorStorePort
 from src.graph import build_graph, decide
-from tests.conftest import NOW
+from tests.conftest import BIRDS, CRANE, NOW
 
 
 class BrokenVectorStore(VectorStorePort):
@@ -124,3 +126,128 @@ def test_unevaluable_notam_is_reported_on_every_decision(wired, graph):
     decision = decide(plan(alt=80), graph)
     assert any("09/04" in w for w in decision.warnings)
     assert decision.confidence < 1.0
+
+
+class FixedRouteLLM(RuleLLMAdapter):
+    """Stands in for an LLM router that answers with a fixed route."""
+
+    def __init__(self, route: str):
+        self._route = route
+
+    def route(self, query: str, has_coords: bool) -> str:
+        return self._route
+
+
+class RecordingVectorStore(VectorStorePort):
+    """Similarity search returns `chunks`; exact lookup returns `defined`."""
+
+    def __init__(self, chunks: List[str], defined: List[str] | None = None):
+        self.chunks = chunks
+        self.defined = defined or []
+        self.queries: List[str] = []
+        self.lookups: List[List[str]] = []
+
+    def search(self, query: str, k: int = 3) -> List[str]:
+        self.queries.append(query)
+        return self.chunks
+
+    def lookup(self, refs):
+        self.lookups.append(list(refs))
+        return self.defined
+
+
+class MissingNotamSource(NotamRepositoryPort):
+    def active(self, at):
+        raise NotamSourceUnavailable("directory not found")
+
+    def all(self):
+        raise NotamSourceUnavailable("directory not found")
+
+
+@pytest.mark.parametrize("alt", [80, 500])
+def test_a_misrouted_request_is_held_not_cleared(wired, graph, alt):
+    """If the router sends a flight plan down the 'retrieve' route the validator
+    never runs. Nothing was checked, so the flight must be held, whatever its
+    altitude. (At 500m it would be a BLOCK if it had been validated.)"""
+    container.override(llm=FixedRouteLLM(Action.RETRIEVE.value))
+    decision = decide(plan(alt=alt), graph)
+    assert decision.action is Action.RETRIEVE
+    assert decision.verdict is Verdict.HOLD
+    assert decision.requires_human
+    assert decision.confidence == 0.0
+    assert decision.ticket_id
+    assert any("nothing cleared" in w for w in decision.warnings)
+
+
+def test_the_act_route_is_held_even_when_no_other_warning_exists(wired, graph):
+    """Holding an unchecked plan must not depend on the sample airspace happening
+    to contain an unevaluable NOTAM. With only evaluable NOTAMs and no other
+    warning, the plan is still held because nothing was retrieved to ground it."""
+    container.override(notam_repository=InMemoryNotamRepository([CRANE, BIRDS]))
+    decision = decide(plan(alt=80, query="D40 telemetry check"), graph)
+    assert decision.action is Action.ACT
+    assert decision.verdict is Verdict.HOLD
+    assert decision.requires_human
+    assert any("not cross-checked" in w for w in decision.warnings)
+
+
+def test_an_unreadable_notam_source_holds_the_flight(wired, graph):
+    container.override(notam_repository=MissingNotamSource())
+    decision = decide(plan(alt=80), graph)
+    assert decision.verdict is Verdict.HOLD
+    assert decision.confidence == 0.0
+    assert any("airspace not assessed" in w for w in decision.warnings)
+
+
+CLAUSE_7 = "§7 Micro RPA ( <2kg ): Max altitude 120m AGL."
+
+
+def test_the_rule_that_was_applied_is_fetched_by_name_not_left_to_similarity(wired, graph):
+    """Similarity search returns something unrelated, as a real retriever sometimes
+    will for a query that says nothing about §7. The validator applied CAR §7, so
+    the retriever looks that rule up by identifier, and the citation is grounded."""
+    store = RecordingVectorStore(["§12 Battery safety: swap if RUL <20 cycles."], defined=[CLAUSE_7])
+    container.override(vector_store=store)
+    decision = decide(plan(alt=80), graph)
+    assert store.lookups == [["CAR §7"]]
+    assert decision.retrieved[0] == CLAUSE_7, "defining chunks are listed first"
+    assert [c.grounded for c in decision.citations] == [True]
+    assert decision.verdict is Verdict.ALLOW
+
+
+def test_a_store_that_cannot_look_a_rule_up_grounds_less_and_so_holds(wired, graph):
+    """The port's default `lookup` returns nothing. That must fail closed."""
+    container.override(vector_store=IrrelevantVectorStore())
+    decision = decide(plan(alt=80), graph)
+    assert decision.verdict is Verdict.HOLD
+    assert [c.grounded for c in decision.citations] == [False]
+
+
+def test_a_lookup_failure_holds_the_flight(wired, graph):
+    class LookupDown(RecordingVectorStore):
+        def lookup(self, refs):
+            raise RetrievalUnavailable("lookup failed")
+
+    container.override(vector_store=LookupDown([CLAUSE_7]))
+    decision = decide(plan(alt=80), graph)
+    assert decision.verdict is Verdict.HOLD
+    assert decision.confidence == 0.0
+
+
+def test_the_graph_runs_the_validator_before_the_retriever_on_the_both_route(wired, graph):
+    order = []
+
+    class Spy(RecordingVectorStore):
+        def search(self, query, k=3):
+            order.append("retriever")
+            return super().search(query, k)
+
+    class SpyNotams(InMemoryNotamRepository):
+        def active(self, at):
+            order.append("validator")
+            return super().active(at)
+
+    container.override(vector_store=Spy([CLAUSE_7], defined=[CLAUSE_7]),
+                       notam_repository=SpyNotams([CRANE, BIRDS]))
+    decide(plan(alt=80), graph)
+    assert order == ["validator", "retriever"]

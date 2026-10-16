@@ -47,6 +47,28 @@ def test_dgca_ceiling_is_checked_before_notams(notams):
     assert result.refs == ["CAR §7"]
 
 
+def test_the_most_restrictive_breach_is_reported_and_every_breach_is_cited():
+    """Two overlapping restrictions: the lower ceiling leads, both are cited,
+    and the result does not depend on the order the NOTAMs were listed in."""
+    tight = replace(CRANE, notam_id="NOTAM 09/07", max_alt_m=50)
+    forward = validate_flight(plan(alt=120), [CRANE, tight])
+    backward = validate_flight(plan(alt=120), [tight, CRANE])
+    for result in (forward, backward):
+        assert result.violation is True
+        assert result.refs == ["NOTAM 09/07", "NOTAM 09/03"]
+        assert result.notam_id == "NOTAM 09/07"
+        assert "max 50m" in result.reason
+        assert "also breaches NOTAM 09/03" in result.reason
+
+
+def test_advisories_after_a_breach_are_still_reported():
+    """The loop used to return at the first breach and drop later advisories."""
+    birds_over_the_crane = replace(BIRDS, lat=CRANE.lat, lon=CRANE.lon)
+    result = validate_flight(plan(alt=120), [CRANE, birds_over_the_crane])
+    assert result.violation is True
+    assert any("09/05" in a for a in result.advisories)
+
+
 def test_position_outside_the_notam_radius_is_clear(notams):
     # 18.52,73.85 is ~1.53km from the crane, outside its 1km radius.
     result = validate_flight(plan(lat=18.52, lon=73.85, alt=120), notams)

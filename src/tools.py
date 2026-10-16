@@ -4,7 +4,7 @@ Nothing in this module calls an LLM. The verdict for a flight plan is produced
 here, by arithmetic over parsed NOTAMs, so that a language model can never be the
 reason a flight was cleared.
 """
-from typing import List, Optional
+from typing import List, Tuple
 import logging
 import math
 
@@ -43,12 +43,24 @@ def check_notam(lat: float, lon: float, notams: List[Notam], radius_km: float = 
             if n.is_geolocatable and haversine_km(lat, lon, n.lat, n.lon) <= radius_km]
 
 
+def _breach_reason(notam: Notam, plan: FlightPlan, distance: float) -> str:
+    ceiling = notam.max_alt_m
+    suggestion = (f" — reduce to {max(ceiling - 20, 0)}m" if ceiling > 0
+                  else " — area is no-fly, reroute required")
+    return (f"{notam.notam_id}: max {ceiling}m within {notam.radius_km}km, "
+            f"flight at {plan.alt}m and {distance:.2f}km away{suggestion}")
+
+
 def validate_flight(plan: FlightPlan, notams: List[Notam]) -> ValidationResult:
     """Evaluate one flight plan against the DGCA ceiling and the supplied NOTAMs.
 
     Returns a violation with the references it relied on, plus any advisories and
     any restriction the parser could not evaluate. Unevaluable restrictions are
     reported rather than ignored — the caller lowers confidence for each one.
+
+    When several NOTAMs are breached at once, the one with the lowest ceiling leads
+    the reason and every breached NOTAM is cited, so the result does not depend on
+    the order the NOTAMs were listed in.
     """
     settings = get_settings()
     advisories: List[str] = []
@@ -70,24 +82,32 @@ def validate_flight(plan: FlightPlan, notams: List[Notam]) -> ValidationResult:
             warnings=warnings,
         )
 
+    breaches: List[Tuple[Notam, float]] = []
     for notam in notams_near(plan, notams):
         distance = haversine_km(plan.lat, plan.lon, notam.lat, notam.lon)
         if notam.severity is Severity.ADVISORY:
             advisories.append(f"{notam.notam_id} within {distance:.2f}km: {notam.text}")
             continue
         if notam.max_alt_m is not None and plan.alt > notam.max_alt_m:
-            ceiling = notam.max_alt_m
-            suggestion = (f" — reduce to {max(ceiling - 20, 0)}m" if ceiling > 0
-                          else " — area is no-fly, reroute required")
-            return ValidationResult(
-                violation=True,
-                reason=(f"{notam.notam_id}: max {ceiling}m within {notam.radius_km}km, "
-                        f"flight at {plan.alt}m and {distance:.2f}km away{suggestion}"),
-                refs=[notam.notam_id],
-                advisories=advisories,
-                warnings=warnings,
-                notam_id=notam.notam_id,
-            )
+            breaches.append((notam, distance))
+
+    if breaches:
+        # Lowest ceiling first, then nearest, then id: a total order, so the same
+        # airspace always produces the same answer.
+        breaches.sort(key=lambda b: (b[0].max_alt_m, b[1], b[0].notam_id))
+        lead, lead_distance = breaches[0]
+        reason = _breach_reason(lead, plan, lead_distance)
+        others = [n.notam_id for n, _ in breaches[1:]]
+        if others:
+            reason += f"; also breaches {', '.join(others)}"
+        return ValidationResult(
+            violation=True,
+            reason=reason,
+            refs=[n.notam_id for n, _ in breaches],
+            advisories=advisories,
+            warnings=warnings,
+            notam_id=lead.notam_id,
+        )
 
     return ValidationResult(
         violation=False,

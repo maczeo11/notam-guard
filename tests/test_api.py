@@ -61,6 +61,12 @@ def test_validate_rejects_out_of_range_input(client, field, value):
     assert post_plan(client, **{field: value}).status_code == 422
 
 
+def test_an_oversized_query_is_rejected_not_processed(client):
+    """The endpoint can be public, so free text must have a ceiling."""
+    assert post_plan(client, query="x" * 501).status_code == 422
+    assert post_plan(client, query="x" * 500).status_code == 200
+
+
 def test_ticket_lifecycle_through_the_human_gate(client):
     ticket_id = post_plan(client).json()["ticket_id"]
 

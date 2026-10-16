@@ -104,6 +104,8 @@ class Ticket:
     issue: str = ""
     severity: str = "HIGH"
     status: str = "open"
+    #: Who closed the gate. Self-asserted: there is no authentication.
+    approved_by: str = ""
 
 
 @dataclass

@@ -59,28 +59,49 @@ class RedisTicketAdapter(TicketPort):
         return Ticket(ticket_id=ticket_id, key=key, deduped=False, ttl_seconds=self._ttl,
                       issue=issue, severity=severity)
 
+    def _ticket(self, record: dict) -> Ticket:
+        return Ticket(ticket_id=record["ticket_id"], key="", deduped=False,
+                      ttl_seconds=self._ttl, issue=record.get("issue", ""),
+                      severity=record.get("severity", "HIGH"),
+                      status=record.get("status", "open"),
+                      approved_by=record.get("approved_by", ""))
+
     def get(self, ticket_id: str) -> Optional[Ticket]:
         raw = self._r.get(f"ticket:{ticket_id}")
         if not raw:
             return None
-        record = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
-        return Ticket(ticket_id=record["ticket_id"], key="", deduped=False,
-                      ttl_seconds=self._ttl, issue=record.get("issue", ""),
-                      severity=record.get("severity", "HIGH"),
-                      status=record.get("status", "open"))
+        return self._ticket(json.loads(raw.decode() if isinstance(raw, bytes) else raw))
 
     def approve(self, ticket_id: str, approver: str) -> Optional[Ticket]:
-        raw = self._r.get(f"ticket:{ticket_id}")
-        if not raw:
-            return None
-        record = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
-        record["status"] = "approved"
-        record["approved_by"] = approver
-        record["approved_at"] = datetime.now(timezone.utc).isoformat()
-        self._r.set(f"ticket:{ticket_id}", json.dumps(record), ex=self._ttl)
-        return Ticket(ticket_id=ticket_id, key="", deduped=False, ttl_seconds=self._ttl,
-                      issue=record.get("issue", ""), severity=record.get("severity", "HIGH"),
-                      status="approved")
+        """Close the gate. The first approval stands.
+
+        The read-check-write runs under WATCH, so two approvers racing cannot both
+        write: one commits and the other retries, sees `approved`, and returns it
+        unchanged. The write keeps the existing TTL, so approving never makes a
+        ticket permanent.
+        """
+        key = f"ticket:{ticket_id}"
+        outcome: dict = {}
+
+        def attempt(pipe) -> None:
+            raw = pipe.get(key)
+            if not raw:
+                outcome["record"] = None
+                return
+            record = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
+            if record.get("status") == "approved":
+                outcome["record"] = record
+                return
+            record["status"] = "approved"
+            record["approved_by"] = approver
+            record["approved_at"] = datetime.now(timezone.utc).isoformat()
+            pipe.multi()
+            pipe.set(key, json.dumps(record), keepttl=True)
+            outcome["record"] = record
+
+        self._r.transaction(attempt, key)
+        record = outcome.get("record")
+        return self._ticket(record) if record else None
 
 
 class InMemoryTicketAdapter(TicketPort):
@@ -120,5 +141,7 @@ class InMemoryTicketAdapter(TicketPort):
             ticket = self._tickets.get(ticket_id)
             if not ticket:
                 return None
-            ticket.status = "approved"
+            if ticket.status != "approved":
+                ticket.status = "approved"
+                ticket.approved_by = approver
             return ticket

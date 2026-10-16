@@ -23,7 +23,9 @@ class FlightPlanRequest(BaseModel):
     lon: float = Field(..., ge=-180, le=180)
     alt: int = Field(..., ge=0, le=10000, description="Altitude AGL in metres")
     drone_id: str = Field(..., min_length=1, max_length=64)
-    query: Optional[str] = "validate flight against DGCA CAR and active NOTAMs"
+    query: Optional[str] = Field(
+        "validate flight against DGCA CAR and active NOTAMs", max_length=500,
+        description="Free-text request. Capped so a public endpoint cannot be fed megabytes.")
     scheduled_for: Optional[datetime] = Field(
         None,
         description="When the flight will actually fly (UTC). NOTAMs are evaluated "
@@ -63,6 +65,7 @@ class TicketResponse(BaseModel):
     status: str
     severity: str = ""
     issue: str = ""
+    approved_by: str = ""
 
 
 class ApprovalRequest(BaseModel):
@@ -121,18 +124,21 @@ def get_ticket(ticket_id: str) -> TicketResponse:
     if ticket is None:
         raise HTTPException(status_code=404, detail=f"unknown ticket {ticket_id}")
     return TicketResponse(ticket_id=ticket.ticket_id, status=ticket.status,
-                          severity=ticket.severity, issue=ticket.issue)
+                          severity=ticket.severity, issue=ticket.issue,
+                          approved_by=ticket.approved_by)
 
 
 @app.post("/approve/{ticket_id}", response_model=TicketResponse)
 def approve_ticket(ticket_id: str, request: ApprovalRequest) -> TicketResponse:
-    """Close the human-in-the-loop gate for a held or blocked flight."""
+    """Close the human-in-the-loop gate for a held or blocked flight. The first
+    approval stands; approving an already-approved ticket returns it unchanged."""
     ticket = container.get_ticket_store().approve(ticket_id, request.approver)
     if ticket is None:
         raise HTTPException(status_code=404, detail=f"unknown ticket {ticket_id}")
-    log.info("ticket %s approved by %s", ticket_id, request.approver)
+    log.info("ticket %s approved by %s", ticket_id, ticket.approved_by)
     return TicketResponse(ticket_id=ticket.ticket_id, status=ticket.status,
-                          severity=ticket.severity, issue=ticket.issue)
+                          severity=ticket.severity, issue=ticket.issue,
+                          approved_by=ticket.approved_by)
 
 
 @app.get("/notams")

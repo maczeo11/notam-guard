@@ -6,6 +6,7 @@ degrades to the deterministic rule adapter rather than failing the request.
 """
 from typing import List
 import logging
+import re
 
 from src.core.config import get_settings
 from src.core.domain import Action
@@ -27,11 +28,13 @@ class RuleLLMAdapter(LLMPort):
     """Deterministic baseline. Also the fallback for every other adapter, so the
     service has no hard dependency on an LLM provider being reachable."""
 
-    _REGULATORY = ("notam", "crane", "dgca", "car", "rule", "regulation", "allowed", "§")
+    #: Whole words only. The router decides which checks run, so 'car' must not be
+    #: found inside 'scarce' or 'carry'.
+    _REGULATORY = re.compile(
+        r"\b(?:notams?|cranes?|dgca|car|rules?|regulations?|allowed)\b|§", re.I)
 
     def route(self, query: str, has_coords: bool) -> str:
-        lowered = query.lower()
-        mentions_rule = any(term in lowered for term in self._REGULATORY)
+        mentions_rule = bool(self._REGULATORY.search(query))
         if has_coords and mentions_rule:
             return Action.BOTH.value
         if has_coords:

@@ -28,7 +28,7 @@ class FileNotamRepository(NotamRepositoryPort):
         notams: List[Notam] = []
         for path in sorted(self._directory.glob("*.txt")):
             try:
-                notams.extend(parse_many(path.read_text(encoding="utf-8"), source=path.name))
+                notams.extend(parse_many(path.read_text(encoding="utf-8-sig"), source=path.name))
             except OSError as exc:
                 raise NotamSourceUnavailable(f"cannot read {path}: {exc}") from exc
         if not notams:

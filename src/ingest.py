@@ -10,7 +10,7 @@ import json
 import logging
 import sys
 
-from src.core.chunking import chunk_words
+from src.core.chunking import chunk_lines, chunk_words
 from src.core.config import REPO_ROOT, get_settings
 
 log = logging.getLogger(__name__)
@@ -28,16 +28,29 @@ CREATE INDEX IF NOT EXISTS sop_chunks_embedding_idx
 """
 
 
-def collect_chunks(patterns: List[str], chunk_size: int, overlap: int) -> List[dict]:
+def collect_chunks(patterns: List[str], chunk_size: int, overlap: int,
+                   strategy: str = "lines") -> List[dict]:
+    """Split the corpus into chunks.
+
+    `lines` (default) makes one chunk per line, which is how this corpus is
+    written: one clause or one NOTAM per line. That keeps the unit a citation
+    refers to intact, and matches what the in-memory store searches. `words` cuts
+    fixed windows, for prose documents that are not line-structured; a window can
+    swallow several clauses, so grounding then relies on its sentence-start rule.
+    """
+    if strategy not in ("lines", "words"):
+        raise ValueError(f"unknown chunk strategy {strategy!r}")
     chunks: List[dict] = []
     for pattern in patterns:
         matches = glob.glob(pattern)
         if not matches:
             log.warning("no files matched %s", pattern)
         for path in matches:
-            text = Path(path).read_text(encoding="utf-8", errors="ignore")
-            for chunk in chunk_words(text, chunk_size, overlap):
-                chunks.append({"doc_id": path, "chunk": chunk})
+            # utf-8-sig drops a leading byte-order mark instead of keeping it as text.
+            text = Path(path).read_text(encoding="utf-8-sig", errors="ignore")
+            pieces = chunk_lines(text) if strategy == "lines" else chunk_words(text, chunk_size, overlap)
+            for chunk in pieces:
+                chunks.append({"doc_id": path.replace("\\", "/"), "chunk": chunk})
     return chunks
 
 
@@ -67,13 +80,17 @@ def main(argv=None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Ingest corpus into pgvector")
     parser.add_argument("--docs", nargs="+", required=True, help="file globs")
-    parser.add_argument("--chunk", type=int, default=512, help="chunk size in words")
-    parser.add_argument("--overlap", type=int, default=50)
+    parser.add_argument("--strategy", choices=["lines", "words"], default="lines",
+                        help="lines: one chunk per line (default); words: fixed word windows")
+    parser.add_argument("--chunk", type=int, default=512,
+                        help="window size in words (only with --strategy words)")
+    parser.add_argument("--overlap", type=int, default=50,
+                        help="window overlap in words (only with --strategy words)")
     parser.add_argument("--dry-run", action="store_true",
                         help="write data/chunks.json instead of touching the database")
     args = parser.parse_args(argv)
 
-    chunks = collect_chunks(args.docs, args.chunk, args.overlap)
+    chunks = collect_chunks(args.docs, args.chunk, args.overlap, args.strategy)
     if not chunks:
         log.error("nothing to ingest")
         return 1
