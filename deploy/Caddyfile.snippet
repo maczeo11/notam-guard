@@ -1,0 +1,35 @@
+notam.43-205-27-169.sslip.io {
+	# Expose only what the web interface calls. Everything else the API offers
+	# (/docs, /openapi.json, /ticket/*, /drone/*/history) stays off the internet.
+	@read {
+		method GET
+		path /health /notams
+	}
+	@validate {
+		method POST
+		path /validate
+	}
+	@approve {
+		method POST
+		path_regexp ^/approve/T-[0-9A-F]{6}$
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Cache-Control "no-store"
+	}
+
+	handle @read {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle @validate {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle @approve {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle {
+		respond "Not found" 404
+	}
+}

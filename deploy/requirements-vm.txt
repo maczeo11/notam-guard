@@ -1,0 +1,10 @@
+# Slim runtime for a small shared VM, used with VECTOR_ADAPTER=memory and LLM_ADAPTER=rule.
+# Leaves out sentence-transformers (and so PyTorch), psycopg2 and langchain-groq, which the
+# in-memory mode never imports. Use requirements.txt for the full stack.
+fastapi>=0.115
+uvicorn>=0.34
+pydantic>=2.11
+python-dotenv>=1.0
+langgraph>=0.2.41
+langsmith>=0.2.6
+redis>=5.2
