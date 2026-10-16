@@ -1,0 +1,308 @@
+<<pdf 4>>
+# The Drone Rules, 2021
+### Preamble
+Whereas, the draft of the Drone Rules, 2021, which the Central Government had proposed to make in supersession of the Unmanned Aircraft System Rules, 2021, were published, as required under Section 14 of the Aircraft Act, 1934 (22 of 1934), vide notification of the Government of India in the Ministry of Civil Aviation number G.S.R. 489(E), dated the 15th July, 2021 in the Gazette of India, Extraordinary, Part II, Section 3, sub-section (i), dated the 15th July, 2021, inviting objections and suggestions from all persons likely to be affected thereby, before the specified period;
+And whereas, the objections and suggestions received in respect of the draft rules within the period so specified have been taken into consideration;
+Now, therefore, in exercise of the powers conferred by Section 5, sub-section (2) of Section 10 and Sections 10-A, 10-B and 12-A of the Aircraft Act, 1934 (22 of 1934), the Central Government hereby makes the following rules, namely—
+## PART I — PRELIMINARY
+### 1. Short title and commencement
+(1) These rules may be called the Drone Rules, 2021.
+(2) They shall come into force on the date of their publication in the Official Gazette.
+### 2. Application
+(1) These rules shall apply to—
+(a) all persons owning or possessing, or engaged in leasing, operating, transferring or maintaining an unmanned aircraft system in India;
+(b) all unmanned aircraft systems that are registered in India; and
+(c) all unmanned aircraft systems that are being operated for the time being, in or over India.
+(2) The provisions of the Aircraft Rules, 1937 shall not apply to unmanned aircraft systems except in case of an unmanned aircraft system with maximum all-up-weight of more than 500 kilograms;
+(3) These rules shall not apply to an unmanned aircraft system belonging to, or used by, the naval, military or air forces of the Union of India.
+### 3. Definitions
+(1) In these rules, unless the context otherwise requires,—
+(a) “Act” means the Aircraft Act, 1934 (22 of 1934);
+(b) “accident” means any accident associated with the operation of an unmanned aircraft system in which a person is fatally or seriously injured
+<<pdf 5>>
+or where the unmanned aircraft system sustains significant damage or goes missing or is completely inaccessible;
+(c) “aeroplane” means any power-driven heavier than air aircraft machine deriving support for its lift in flight chiefly from aerodynamic reactions on surfaces which remain fixed under given conditions of flight;
+(d) “authorised remote pilot training organisation” means an organisation authorised by the Director General for the purpose of imparting training under Rule 39;
+(e) “authorised testing entity” means an entity authorised by the Director General or the Quality Council of India for the purpose of testing unmanned aircraft system for type certification;
+(f) “Contracting State” means any country which is for the time being a party to the Convention on International Civil Aviation concluded at Chicago on 7th December 1944;
+(g) “digital sky platform” means the online platform hosted by the Directorate General of Civil Aviation for various activities related to the management of unmanned aircraft system activities in India;
+(h) “Director General” means the Director General of Civil Aviation appointed under Section 4A of the Act;
+(i) “Drone” means an unmanned aircraft system;
+(j) “Drone acknowledgement number” means the unique number issued by the digital sky platform under the voluntary disclosure scheme for unmanned aircraft systems in India;
+(k) “Geo-fencing” means restricting the movement of unmanned aircraft system within a defined airspace;
+(l) “green zone” means the airspace of defined dimensions above the land areas or territorial waters of India, upto a vertical distance of 400 feet or 120 metre that has not been designated as a red zone or yellow zone in the airspace map for unmanned aircraft system operations and the airspace upto a vertical distance of 200 feet or 60 metre above the area located between a lateral distance of 8 kilometre and 12 kilometre from the perimeter of an operational airport:
+“yellow zone” means the airspace of defined dimensions above the land areas or territorial waters of India within which unmanned aircraft system operations are restricted and shall require permission from the concerned air traffic control authority. The airspace above 400 feet or 120 metre in the designated green zone and the airspace above 200 feet or 60 metre in the area located between the lateral distance of 8 kilometre and 12 kilometre from the perimeter of an operational airport, shall be designated as yellow zone;
+“red zone” means the airspace of defined dimensions, above the land areas or territorial waters of India, or any installation or notified port limits specified by the Central Government beyond the territorial waters
+<<pdf 6>>
+of India, within which unmanned aircraft system operations shall be permitted only by the Central Government;
+(m) “hybrid unmanned aircraft” means a heavier-than-air unmanned aircraft capable of vertical take-off and landing which depends principally on power-driven lift devices or engine thrust for the lift during the flight regimes and on non-rotating airfoil for lift during horizontal flight;
+(n) “model remotely piloted aircraft system” means a remotely piloted aircraft system, with all-up weight not exceeding twenty-five kilograms, used for educational, research, design, testing or recreational purpose only and operated within visual line of sight;
+(o) “Operator” means a person engaged in, or offering to engage in, an operation involving an unmanned aircraft system;
+(p) “person” includes an individual, a company, a firm, an association of persons, a body of individuals, a local authority, the Central Government, the State Government and any legal entity, whether incorporated or not;
+(q) “prototype unmanned aircraft system” means an unmanned aircraft system developed for the purpose of research and development or obtaining a type certificate;
+(r) “Quality Council of India” is the autonomous body set up by the Government of India jointly with the Indian Industry in a public private partnership to establish and operate national accreditation structure and promote quality;
+(s) “remote pilot” means an individual charged by the operator with duties essential to the operation of an unmanned aircraft and who manipulates the flight controls, as appropriate, during flight time;
+(t) “remote pilot licence” means the licence issued by Director General to any individual under Rule 34;
+(u) “remote pilot station” means the component of the remotely piloted aircraft system containing the equipment used to pilot the remotely piloted aircraft;
+(v) “remotely piloted aircraft” means an unmanned aircraft that is piloted from a remote pilot station;
+(w) “remotely piloted aircraft system” means a remotely piloted aircraft, its associated remote pilot stations, the required command and control links and any other components as specified in the type design;
+(x) “Rotorcraft” means a heavier-than-air aircraft supported in flight by the reactions of the air on one or more power driven rotors on substantially vertical axes;
+(y) “type certificate” means a certificate issued by the Director General or any other entity authorised by the Director General, certifying that the unmanned aircraft system of a specific type meets with the requirements specified under these rules;
+(z) “type of unmanned aircraft system” means all unmanned aircraft systems of the same basic design including all modifications thereto,
+<<pdf 7>>
+except those modifications which result in a change in handling or flight characteristics;
+(za) “Unique Identification Number” means the unique identification number issued for registering an unmanned aircraft system in India;
+(zb) “unmanned aircraft system” means an aircraft that can operate autonomously or can be operated remotely without a pilot on board;
+(zc) “Unmanned Aircraft System Traffic Management System” means a system that provides traffic management for safe and expeditious flow of unmanned aircraft traffic and avoids collision between manned and unmanned aircraft through the collaborative integration of persons, information, technology, facilities and services;
+(2) The words and expressions used herein but not defined, and defined in the Aircraft Act, 1934 or in the Aircraft Rules, 1937 shall have the same meaning as assigned to them in the said Act or the rules.
+## PART II — CLASSIFICATION OF UNMANNED AIRCRAFT SYSTEM
+### 4. Categorisation of unmanned aircraft system
+(1) The unmanned aircraft system shall be categorized into the following three categories, namely—
+(a) aeroplane;
+(b) rotorcraft; and
+(c) hybrid unmanned aircraft system.
+(2) The aeroplane, rotorcraft and hybrid unmanned aircraft system shall be further sub-categorised as follows—
+(a) remotely piloted aircraft system;
+(b) model remotely piloted aircraft system; and
+(c) autonomous unmanned aircraft system.
+### 5. Classification of unmanned aircraft systems
+The unmanned aircraft system shall, based on the maximum all-up weight including payload, be classified as follows—
+(a) Nano unmanned aircraft system: weighing less than or equal to 250 grams;
+(b) Micro unmanned aircraft system: weighing more than 250 grams, but less than or equal to 2 kilograms;
+(c) Small unmanned aircraft system: weighing more than 2 kilograms, but less than or equal to 25 kilograms;
+(d) Medium unmanned aircraft system: weighing more than 25 kilograms, but less than or equal to 150 kilograms; and
+(e) Large unmanned aircraft system: weighing more than 150 kilograms.
+<<pdf 8>>
+## PART III — CERTIFICATION OF UNMANNED AIRCRAFT SYSTEM
+### 6. General
+No person shall operate an unmanned aircraft system in India unless such unmanned aircraft system conforms to a type certificate or is exempted from the requirement of a type certificate under these rules.
+### 7. Certification standards
+The Central Government may, on the recommendation of the Quality Council of India, by notification in the Official Gazette, specify the standards for obtaining a type certificate for unmanned aircraft systems and such standards may promote the use of the following—
+(a) made-in-India technologies, designs, components and unmanned aircraft systems; and
+(b) Indian regional navigation satellite system, namely, Navigation with Indian Constellation.
+### 8. Type certification
+The Director General or any entity authorised by the Director General in this behalf, may, on the recommendation of the Quality Council of India or an authorised testing entity, issue a type certificate for any particular type of unmanned aircraft system.
+### 9. Application and procedure for issuance of type certificate
+(1) Any person, who intends to obtain a type certificate, shall make an application in Form D-1 on the digital sky platform along with the fee as specified in Rule 46 and the following—
+(a) particulars of the applicant;
+(b) details and required documents in respect of the prototype unmanned aircraft system as specified therein; and
+(c) the prototype unmanned aircraft system shall be physically handed over to the authorised testing entity specified therein.
+(2) The Quality Council of India or the authorised testing entity shall examine the proposal and submit the test report along with its recommendations to the Director General within sixty days from the date of receipt of the application.
+(3) On the basis of test report along with the recommendations received under sub-rule (2), and on being satisfied, the Director General shall issue to the applicant a type certificate for the specific type of unmanned aircraft system within fifteen days of receiving such test report.
+### 10. Acceptance of approvals given by foreign regulators
+On the basis of the approval granted to any type of unmanned aircraft system by such of the Contracting States, as may be specified by the Central Government by notification in the Official Gazette, the Director General may issue type certification to that type of unmanned aircraft system.
+### 11. Imports
+Import of unmanned aircraft systems shall be regulated by the Directorate General of Foreign Trade or any other entity authorised by the Central Government.
+<<pdf 9>>
+### 12. Mandatory safety features
+(1) The Central Government may, in future, by notification in the Official Gazette, specify safety features to be installed on an unmanned aircraft system by persons owning it, which may include among others, the following safety features, namely—
+(a) ‘No Permission-No Takeoff’ hardware and firmware;
+(b) Real-time tracking beacon that communicates the unmanned aircraft system’s location, altitude, speed and unique identification number; and
+(c) Geo-fencing capability.
+(2) Every person who owns an unmanned aircraft system shall adopt safety features notified under sub-rule (1) within such period, not less than six months from the date of publication of such notification, as the Central Government may specify.
+### 13. Exemption from obtaining type certificate in certain cases
+(1) No type certificate shall be required for manufacturing or importing an unmanned aircraft system.
+(2) No type certificate shall be required for operating the following, namely—
+(a) a model remotely piloted aircraft system; and
+(b) a nano unmanned aircraft system.
+## PART IV — REGISTRATION OF UNMANNED AIRCRAFT SYSTEM
+### 14. General
+(1) No person shall operate an unmanned aircraft system without first registering it on the digital sky platform and obtaining a unique identification number, unless exempted from the requirement of a unique identification number under these rules.
+(2) A registration record shall be maintained by the Director General of all such unmanned aircraft systems to which unique identification number has been issued under these rules.
+(3) It shall be the responsibility of the person operating an unmanned aircraft system to ensure that such unmanned aircraft system conforms to a valid type certificate.
+### 15. Application and procedure for registration
+(1) Any person who intends to register and obtain a unique identification number for his unmanned aircraft system shall make an application in Form D-2 on the digital sky platform along with the fee as specified in Rule 46 and provide requisite details including the unique number of the type certificate to which such unmanned aircraft system conforms to.
+(2) The digital sky platform shall verify the details and issue a unique identification number to the applicant.
+(3) The unique identification number of an unmanned aircraft system shall be linked to the unique serial number provided by the manufacturer and the unique serial numbers of its flight control module and remote pilot station.
+<<pdf 10>>
+(4) No person shall replace the flight control module or remote pilot station of an unmanned aircraft system whose serial number is linked to such unmanned aircraft system’s unique identification number, without first updating, on the digital sky platform, the unique serial number of the new flight control module or remote pilot station, within a period of seven days from the date of such replacement or before operating such unmanned aircraft system, whichever is earlier.
+### 16. Registration of existing unmanned aircraft systems
+(1) A person owning an unmanned aircraft system manufactured in India or imported into India on or before the 30th day of November, 2021 shall, within a period of thirty one days falling after the said date, make an application to register and obtain a unique identification number for his unmanned aircraft system and provide requisite details in Form D-2 on the digital sky platform along with the fee as specified in Rule 46.
+(2) The digital sky platform shall verify the details furnished under sub-rule (1) and issue a unique identification number to the applicant, if the unmanned aircraft system—
+(a) has a valid Drone Acknowledgement Number issued by the digital sky platform on or before the date mentioned in sub-rule (1);
+(b) has a Goods and Service Tax paid invoice for the unmanned aircraft system; and
+(c) is part of the list of unmanned aircraft systems published on the digital sky platform by the Director General.
+### 17. Transfer of unmanned aircraft systems
+(1) A person may transfer an unmanned aircraft system to another person by way of sale, lease, gift or any other mode, after providing requisite details of the transferor, transferee and unique identification number of the unmanned aircraft system in Form D-3 on the digital sky platform, along with the fee as specified in Rule 46.
+(2) A transfer referred to in sub-rule (1) shall be effected in the registration record maintained by the Director General and a transaction number shall be generated by the digital sky platform after electronic verification of the transferor, transferee and the unique identification number.
+### 18. Deregistration of unmanned aircraft systems
+(1) Where an unmanned aircraft system registered in a person’s name is either permanently lost or permanently damaged, he shall, on arriving at a reasonable conclusion that it is so lost or damaged, apply for deregistration of such unmanned aircraft system by submitting an application in Form D-3 on the digital sky platform along with the fee as specified in Rule 46.
+(2) The deregistration referred to in sub-rule (1) shall be effected in the registration record maintained by the Director General and a transaction number shall be generated by the digital sky platform.
+<<pdf 11>>
+## PART V — OPERATION OF UNMANNED AIRCRAFT SYSTEM
+### 19. Airspace Map
+The Central Government may, within thirty days of the date of notification of these rules, publish on the digital sky platform, an airspace map for unmanned aircraft system operations segregating the entire airspace of India into red zone, yellow zone and green zone, with a horizontal resolution equal or finer than 10 meters.
+### 20. Interactive maps
+The airspace map for unmanned aircraft system operations shall be so designed as to be programmatically accessible through a machine readable Application Programming Interface and interactive so that unmanned aircraft system pilots shall be able to plot their proposed flight plan and easily identify the zone within which it falls so as to assess whether or not they need to make an application for prior approval.
+### 21. Mandatory pre-flight verification of zonal restrictions
+Before commencing an unmanned aircraft system operation, a remote pilot shall mandatorily verify the digital sky platform for any notification or restriction applicable to unmanned aircraft system operations in the intended area of operation.
+### 22. Requirement of prior permission
+(1) No person shall operate an unmanned aircraft system in a red zone or yellow zone without prior permission.
+(2) No prior permission shall be required for operating an unmanned aircraft system in a green zone, subject to the provisions of Rule 21.
+### 23. Dynamic nature of zoning
+The Central Government may update the airspace map on digital sky platform for unmanned aircraft system operations from time to time in order to change the status of an area from one zone to another and such change shall come into effect no sooner than seven days after the date of such update.
+### 24. Temporary Red Zone
+(1) If there is an urgent need to temporarily prohibit unmanned aircraft system flights in any specified area, the concerned State Government or the Union Territory Administration or a law enforcement agency may declare a temporary red zone over such specified area, for a period not exceeding ninety six hours at a time, by notifying it through the digital sky platform and highlighting it on the airspace map.
+(2) The temporary red zone shall be declared by an officer not below the rank of Superintendent of Police or his equivalent and such officer shall endeavour to keep the size of the temporary red zone reasonable and not excessive.
+(3) An endeavour shall be made to inform, through digital sky platform or other electronic means, to all holders of unique identification number who are within a distance of five kilometre from the perimeter of the temporary red zone, of the restriction so declared under sub-rule (1), but in case no such information is received, it shall not absolve a remote pilot of the responsibility to verify the zonal
+<<pdf 12>>
+restrictions on the digital sky platform before commencing an unmanned aircraft system operation.
+### 25. Access to digital sky platform
+The nodal officers of State Governments, Union Territory Administrations and law enforcement agencies shall be provided direct access to the digital sky platform.
+### 26. Safe operation
+No person shall operate an unmanned aircraft system in a manner, either directly or indirectly, as to endanger the safety and security of any person or property.
+### 27. Prohibition on carriage of arms, ammunition, explosives and military stores, etc.
+No person shall carry or cause or permit to be carried in any unmanned aircraft to, from, within or over India, any arms, ammunitions, munitions of war, implements of war, explosives and military stores, except with the written permission of the Central Government or any other person authorised by the Central Government in this behalf and subject to the terms and conditions of such permission.
+### 28. Carriage of dangerous goods
+No person shall carry dangerous goods on unmanned aircraft unless such operation is in compliance with the Aircraft (Carriage of Dangerous Goods) Rules, 2003.
+### 29. Right of way
+No person operating an unmanned aircraft system shall violate the right of way of a manned aircraft and shall remain clear of all manned aircrafts.
+### 30. Mandatory reporting of an accident
+No later than forty-eight hours after an accident involving an unmanned aircraft system takes place, the remote pilot of such unmanned aircraft system shall report the accident to the Director General through the digital sky platform.
+## PART VI — REMOTE PILOT LICENCE
+### 31. General
+No individual other than a holder of a valid remote pilot licence enlisted on the digital sky platform shall operate an unmanned aircraft system.
+### 32. Classification
+A remote pilot licence shall specifically mention the category, sub-category and classification of the unmanned aircraft system or a combination of these, for which it is issued.
+### 33. Eligibility
+An individual shall be eligible to obtain a remote pilot licence, if he—
+(a) is not less than eighteen years of age and not more than sixty-five years of age;
+(b) has passed class tenth examination or its equivalent from a recognised Board; and
+(c) has successfully completed such training as may be specified by the Director General, from any authorised remote pilot training organisation.
+<<pdf 13>>
+### 34. Procedure for obtaining a remote pilot licence
+(1) Any individual, who desires to obtain a remote pilot licence for any category, sub-category or class of an unmanned aircraft system, or a combination thereof, shall complete the training specified by the Director General for such category, sub-category or class, and pass the tests conducted by the authorised remote pilot training organisation.
+(2) Within seven days of successful completion of the training and passing of the tests under sub-rule (1), the authorised remote pilot training organisation shall make an application for remote pilot licence in Form D-4 on the digital sky platform along with the fee as specified in Rule 46, providing details of the individual who has passed the test.
+(3) The individual in respect of whom an application has been made by the authorised remote pilot training organisation under sub-rule (2) shall be issued a remote pilot certificate through digital sky platform.
+(4) The Director General shall, within fifteen days from the date of issue of the remote pilot certificate under sub-rule (3), issue the remote pilot licence to such individual through the digital sky platform.
+### 35. Validity of licence
+A remote pilot licence shall—
+(a) be valid only if it is enlisted on the digital sky platform;
+(b) unless suspended or cancelled, remain valid for a period of ten years;
+(c) be renewed by the Director General for such period as may be specified therein, subject to a maximum period of ten years, on payment of fee as specified in Rule 46:
+Provided that the holder of the remote pilot licence shall undergo such refresher course as may be specified by the Director General on the digital sky platform from time to time.
+### 36. Exemption from obtaining licence
+No remote pilot licence shall be required for—
+(a) operating a nano unmanned aircraft system; and
+(b) operating a micro unmanned aircraft system for non-commercial purposes.
+## PART VII — REMOTE PILOT TRAINING ORGANISATION
+### 37. General
+No person other than an authorised remote pilot training organisation shall impart training to an individual seeking a remote pilot licence.
+### 38. Eligibility
+No remote pilot training organisation shall be authorised to impart training unless it meets with the eligibility criteria as may be specified by the Director General.
+### 39. Procedure for obtaining authorisation
+(1) Any person who intends to obtain the authorisation to establish a remote pilot training organisation shall submit an application to the Director General in Form D-5 on the digital sky platform, along with the fees as specified in Rule 46.
+<<pdf 14>>
+(2) The Director General may, within sixty days of the date of receipt of application under sub-rule (1), issue the authorisation to establish a remote pilot training organisation to the applicant if he satisfies the specified criteria and meets with the requirements for establishing such remote pilot training organisation.
+### 40. Validity
+An authorisation to establish a remote pilot training organisation shall, unless suspended or cancelled, remain valid for a period of ten years, and may be renewed for the period specified therein, subject to a maximum period of ten years at a time, on payment of fee as specified in Rule 46.
+### 41. Training requirements
+(1) An Authorised remote pilot training organisation shall ensure strict compliance with the requirements specified by the Director General on the digital sky platform in respect of training, syllabus, infrastructure, instructors, proficiency testing and issuance of remote pilot certificates.
+(2) The training requirements specified under sub-rule (1) shall be specific to a category, sub-category and class of unmanned aircraft system.
+## PART VIII — RESEARCH, DEVELOPMENT AND TESTING
+### 42. Unmanned aircraft system operations for research, development and testing
+The following persons shall not require a type certificate, unique identification number, prior permission and remote pilot licence for operating unmanned aircraft systems for research, development and testing purposes, namely—
+(a) any research and development entity under the administrative control of, or recognised by, the Central Government or State Government or Union Territory Administration;
+(b) any educational institution under the administrative control of, or recognised by, the Central Government or State Government or Union Territory Administration;
+(c) any Startup recognised by the Department for Promotion of Industry and Internal Trade;
+(d) any authorised testing entity; and
+(e) any unmanned aircraft system manufacturer having a Goods and Service Tax Identification Number:
+Provided that such unmanned aircraft system operations takes place within a green zone and within the premises of the person where such research, development and testing is being carried out or within an open area in a green zone under such person’s control.
+## PART IX — UNMANNED AIRCRAFT SYSTEM TRAFFIC MANAGEMENT
+### 43. Unmanned aircraft system traffic management
+(1) The Central Government may, within sixty days of the date of publication of these rules,
+<<pdf 15>>
+publish a policy framework in respect of the Unmanned Aircraft System Traffic Management System on the digital sky platform.
+(2) Such policy framework shall be in conformity with these rules, shall facilitate automated permissions as required under these rules and include—
+(a) the framework for developing corridors for safe and seamless transfer of goods by unmanned aircraft systems within and across zones; and
+(b) the roles, powers and responsibilities of the State Governments and Union Territory Administrations.
+## PART X — INSURANCE
+### 44. Insurance
+(1) The provisions of the Motor Vehicles Act, 1988 (59 of 1988) and rules made thereunder shall apply, mutatis mutandis, to the third party insurance of unmanned aircraft system and compensation in case of damage to life or property caused by such an unmanned aircraft system:
+Provided that a nano unmanned aircraft system may operate without third party insurance.
+(2) A person operating a unmanned aircraft system may use an insurance product specially designed for such operations, as and when such insurance product is approved by the Insurance Regulatory and Development Authority of India.
+## PART XI — UNMANNED AIRCRAFT SYSTEM PROMOTION
+### 45. Unmanned aircraft system promotion
+(1) The Central Government may promote the adoption and use of unmanned aircraft systems by constituting an Unmanned Aircraft Systems Promotion Council, which shall facilitate—
+(a) development of a business-friendly regulatory regime, including automated permissions;
+(b) establishment of incubators and other facilities for the development of unmanned aircraft system technologies;
+(c) involvement of industry experts and academic institutions in policy advice; and
+(d) organising competitive events involving unmanned aircraft systems and counter-unmanned aircraft system technologies.
+(2) The Central Government may, after evaluating these rules on the basis of economic impact, prepare a six-monthly report listing the achievements of the Indian unmanned aircraft system sector and the measures taken to further the ease of doing business in that sector.
+## PART XII — MISCELLANEOUS
+### 46. Fee
+The fee payable for the services specified in column (2) of the Table below, rendered by the Central Government under these rules, shall be as specified in the corresponding column (3) of the said Table, namely—
+<<pdf 16>>
+Table of fees (Rule 46). Fee in rupees:
+Sl. No. 1: Issuance of type certificate — 100
+Sl. No. 2: Issuance, transfer or deregistration of unique identification number — 100
+Sl. No. 3: Issuance or renewal of remote pilot licence — 100
+Sl. No. 4: Authorisation or renewal of authorisation of remote pilot training organisation — 1,000
+Note.—The Quality Council of India, authorised testing entities and authorised remote pilot training organisations may collect market-linked service charges for the services rendered by them in accordance with these rules.
+### 47. Directions
+Where the Central Government deems it necessary, it may, not inconsistent with the provisions of the Act, or these rules, issue a general or special direction related to unmanned aircraft systems.
+### 48. General power to exempt
+The Central Government may, by a general or special order in writing, exempt any person or class of persons from the operation of these rules, either wholly or partially, subject to such conditions, as may be specified in that order.
+### 49. Offences, classification and compounding
+(1) No person shall carry out any activity in contravention of these rules.
+(2) Notwithstanding anything contained in the Code of Criminal Procedure, 1973 (2 of 1974), the contravention of Rule 22 and Rule 27 shall be cognizable and non-compoundable.
+(3) It shall be a defence to any proceeding for contravention of, or failure to comply with, these rules, if such contravention or failure is proved to have been caused due to factors or circumstances, such as stress of weather or other unavoidable cause or circumstances, beyond the control of such person or without his knowledge or fault.
+(4) The provisions of these rules shall be in addition to, and not in derogation of, the provisions of any other law, for the time being in force.
+### 50. Penalties
+Where, after giving an opportunity of being heard, the Director General or an officer authorised by the Central Government or a State Government or Union Territory Administration, is satisfied that a person has contravened or failed to comply with the provisions of these rules, he may, for reasons to be recorded in writing, levy a penalty not exceeding rupees one lakh in accordance with the provisions of Section 10-A of the Act.
+### 51. Power to inspect
+The Director General, or any person authorised by him, by general or special order in writing, may inspect any unmanned aircraft
+<<pdf 17>>
+system, any related facility, interact with any personnel, and inspect any document or record for the purpose of securing compliance with these rules and the provisions of the Act.
+### 52. Obstruction of authorised persons
+No person shall voluntarily obstruct any person acting in the exercise of his powers or in the discharge of his duties under these rules.
+### 53. Cancellation or suspension
+Where the Director General, after giving an opportunity of being heard, is satisfied that a person has contravened or failed to comply with the provisions of these rules, he may, for reasons to be recorded in writing, cancel or suspend any licence, certificate, authorisation or approval granted under these rules.
+### 54. Saving of certain orders
+Nothing in these rules shall limit or otherwise affect the power of the Central Government with regard to any order issued in the interest of public safety or for safe operation of all manned or unmanned aircraft.
+### 55. Repeal and saving
+The Unmanned Aircraft System Rules, 2021 stand repealed, except as respects things done or omitted to be done before such repeal.
+<<pdf 17>>
+## FORMS
+### FORM D-1 — Application for type certificate (See Rule 9)
+Part A — Details of individual (if applicable): 1 Full name; 2 Mobile number (linked to the Aadhaar number); 3 E-mail address; 4 Aadhaar number; 5 Indian passport number; 6 Permanent account number (optional); 7 Residential address.
+Part B — Details of organisation (if applicable): 8 Name of the manufacturer; 9 Address of the manufacturer; 10 Registration number of organisation; 11 GSTIN certificate (optional); 12 Name of the Director(s) with their DIN; 13 Aadhaar number of one Director; 14 E-mail address of the Director; 15 Mobile number of the Director (linked to the Aadhaar number).
+<<pdf 18>>
+Part C — Unmanned aircraft system specifications and documents: 16 Model name; 17 Category of UAS (Aeroplane, Rotorcraft or Hybrid); 18 Sub-category of UAS (RPAS, Model or Autonomous); 19 Class of UAS (Nano, Micro, Small, Medium or Large); 20 Specifications of flight control module; 21 Specifications of remote pilot station; 22 Maximum all-up-weight (including payload) in kg; 23 Overall dimensions (l × b × h) in mm; 24 Description; 25 Details of compatible payload; 26 Variable load/consumables (like fluid etc., if any); 27 Engine/Motor; 28 Power rating; 29 Number of engines/motors; 30 Total fuel capacity (kg)/Battery capacity (mAh); 31 Propeller details; 32 Ground control station software version; 33 Frequency band; 34 Maximum endurance; 35 Maximum range (in km); 36 Maximum speed (in m/s); 37 Maximum height attainable/Maximum ceiling height (in feet); 38 Operating altitude (in feet); 39 Operational envelope; 40 Engine limits (maximum RPM)/Maximum battery temperature (in °C); 41 Propeller limits; 42 Manufacturer’s operating manual (as applicable); 43 Manufacturer’s maintenance guidelines (as applicable); 44 Maintenance inspection schedule/Overhaul interval; 45 Photographs of the unmanned aircraft system (a) front view and (b) top view;
+<<pdf 19>>
+46 Select authorised testing entity (from dropdown menu on digital sky platform).
+Part D — Fee details: 47 Transaction number; 48 Fee receipt.
+Declaration: I hereby declare that all information provided herein are true and correct to the best of my knowledge. I understand that furnishing any false information herein shall make me liable for penal action, as applicable. Name; Date; Place.
+### FORM D-2 — Application for registration of unique identification number (See Rule 15 and 16)
+Part A — Details of individual (if applicable): 1 Full name; 2 Mobile number (linked to the Aadhaar number); 3 E-mail address; 4 Aadhaar number; 5 Indian passport number; 6 Permanent account number (optional); 7 Residential address.
+Part B — Details of organisation (if applicable): 8 Name of the organisation; 9 Address of the organisation; 10 Registration number of organisation; 11 GSTIN certificate (optional); 12 Name of the Director(s) with their DIN; 13 Aadhaar number of one Director; 14 E-mail address of the Director; 15 Mobile number of the Director (linked to the Aadhaar number).
+Part C — Unmanned aircraft system specifications:
+<<pdf 20>>
+16 Category of UAS (Aeroplane, Rotorcraft or Hybrid); 17 Sub-category of UAS (RPAS, Model or Autonomous); 18 Class of UAS (Nano, Micro, Small, Medium or Large); 19 Manufacturer’s name; 20 Model name; 21 Serial number of type certificate (if applicable); 22 Serial number provided by manufacturer; 23 Serial number of flight control module; 24 Serial number of remote pilot station; 25 Photographs of the unmanned aircraft system (a) front view, (b) top view and (c) close-up of manufacturer’s serial number; 26 Drone Acknowledgement Number (DAN) (if applicable); 27 Upload GST-paid invoice (only for DAN holders).
+Part D — Fee details: 28 Transaction number; 29 Fee receipt.
+Declaration: I hereby declare that all information provided herein are true and correct to the best of my knowledge. I further declare that this unmanned aircraft system conforms to the type certificate mentioned in the form (if applicable). I understand that furnishing any false information herein shall make me liable for penal action, as applicable. Name; Date; Place.
+### FORM D-3 — Application for transfer or deregistration of unmanned aircraft systems (See Rules 17 and 18)
+Part A — Unmanned aircraft system details: 1 Unique identification number (UIN); 2 Model name; 3 All up weight.
+Part B — Transferor/Owner details: 4 Full name of individual or organisation;
+<<pdf 21>>
+5 Aadhaar number (for individual); 6 Indian passport number (for individual); 7 E-mail address; 8 Mobile number linked to the Aadhaar number; 9 Address; 10 Permanent account number (optional); 11 GSTIN certificate (optional); 12 Nature of transaction (Transfer, or Deregistration — skip to Part D); 13 Nature of transfer, if applicable (Sale, Lease, Gift or Others).
+Part C — Transferee details (if applicable). Details of individual (if applicable): 14 Full name; 15 Mobile number (linked to the Aadhaar number); 16 E-mail address; 17 Aadhaar number; 18 Indian passport number; 19 Permanent account number (optional); 20 Residential address. Details of organisation (if applicable): 21 Name of the organisation; 22 Address of the organisation; 23 Registration number of organisation; 24 GSTIN certificate (optional); 25 Name of the Director(s) with their DIN; 26 Aadhaar number of one Director; 27 E-mail address of the Director; 28 Mobile number of the Director (linked to the Aadhaar number).
+Part D — Deregistration details (if applicable): 29 Reason for deregistration (Permanently lost, or Permanently damaged).
+Part E — Fee details: 30 Transaction number; 31 Fee receipt.
+<<pdf 22>>
+Declaration (Form D-3): I hereby declare that all information provided herein are true and correct to the best of my knowledge. I understand that furnishing any false information herein shall make me liable for penal action, as applicable. Name; Date; Place.
+### FORM D-4 — Application for remote pilot licence, to be filed by RPTO (See Rules 34 and 35)
+Part A — Details of individual: 1 Full name; 2 Date of birth (DD MMM YYYY); 3 Latest photograph; 4 Aadhaar number; 5 Indian passport number; 6 E-mail address; 7 Phone number; 8 Residential address.
+Part B — Training details: 9 Name of the training organisation; 10 DGCA authorisation number of training organisation; 11 Category of UAS (Aeroplane, Rotorcraft or Hybrid); 12 Sub-category of UAS (RPAS, Model or Autonomous); 13 Class of UAS (Nano, Micro, Small, Medium or Large); 14 Training certificate number issued by RPTO.
+Part C — Fee details: 15 Transaction number; 16 Fee receipt.
+Declaration: I hereby declare that all information provided herein are true and correct to the best of my knowledge. I understand that furnishing any false information herein shall make me liable for penal action, as applicable. Name; Date; Place.
+<<pdf 23>>
+### FORM D-5 — Application for authorisation of remote pilot training organisation (See Rules 39 and 40)
+Part A — Details of individual or head of the organisation: 1 Full name; 2 Mobile number (linked to the Aadhaar number); 3 E-mail address; 4 Aadhaar number; 5 Indian passport number; 6 Permanent account number (optional); 7 Residential address.
+Part B — Organisation details: 8 Name of the organisation; 9 Address of the organisation; 10 Registration number of organisation; 11 GSTIN certificate (optional); 12 Name of the Director(s) with their DIN; 13 Aadhaar number of one Director; 14 E-mail address of the Director; 15 Mobile number of the Director (linked to the Aadhaar number).
+Part C — Infrastructure: 16 Proof of land ownership or rental agreement; 17 Number of classrooms; 18 Total area of the classrooms.
+Part D — Unmanned aircraft system specifications and documents (for each operational unmanned aircraft system): 19 Category of UAS (Aeroplane, Rotorcraft or Hybrid); 20 Sub-category of UAS (RPAS, Model or Autonomous); 21 Class of UAS (Nano, Micro, Small, Medium or Large); 22 Model name; 23 Unique identification number; 24 Unmanned aircraft system specifications.
+<<pdf 24>>
+Part E — Personnel details: 25 Details of accountable manager; 26 Details of each instructor.
+Part F — Fee details: 27 Transaction number; 28 Fee receipt.
+Declaration: I hereby declare that all information provided herein are true and correct to the best of my knowledge. I shall ensure full compliance with the training requirements specified by the Directorate General of Civil Aviation. I understand that furnishing any false information herein shall make me liable for penal action, as applicable. Name; Date; Place.

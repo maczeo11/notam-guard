@@ -1,6 +1,10 @@
 """Ingest the regulatory corpus into pgvector.
 
 Run: python -m src.ingest --docs "data/dgca_car.txt" "data/notams/*.txt"
+     python -m src.ingest --docs "data/notams/*.txt" --regulations
+
+`--regulations` adds the real documents in data/regulations (see its README), which are
+already chunked by rule and section; `--strategy` and the window options apply only to `--docs`.
 """
 from pathlib import Path
 from typing import List
@@ -54,6 +58,12 @@ def collect_chunks(patterns: List[str], chunk_size: int, overlap: int,
     return chunks
 
 
+def regulation_chunks() -> List[dict]:
+    """The built regulation corpus, in the shape `write_to_pgvector` takes. The doc_id is the chunk id."""
+    from src.regulations import load_chunks
+    return [{"doc_id": chunk.id, "chunk": chunk.text} for chunk in load_chunks()]
+
+
 def write_to_pgvector(chunks: List[dict]) -> int:
     """Embed and upsert. Raises on failure — a silent fallback would leave the
     service querying an empty table and reporting HOLD for every flight."""
@@ -79,7 +89,9 @@ def write_to_pgvector(chunks: List[dict]) -> int:
 def main(argv=None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Ingest corpus into pgvector")
-    parser.add_argument("--docs", nargs="+", required=True, help="file globs")
+    parser.add_argument("--docs", nargs="*", default=[], help="file globs")
+    parser.add_argument("--regulations", action="store_true",
+                        help="also ingest data/regulations/chunks.jsonl (real documents, chunked by rule)")
     parser.add_argument("--strategy", choices=["lines", "words"], default="lines",
                         help="lines: one chunk per line (default); words: fixed word windows")
     parser.add_argument("--chunk", type=int, default=512,
@@ -89,8 +101,12 @@ def main(argv=None) -> int:
     parser.add_argument("--dry-run", action="store_true",
                         help="write data/chunks.json instead of touching the database")
     args = parser.parse_args(argv)
+    if not args.docs and not args.regulations:
+        parser.error("give --docs, --regulations, or both")
 
     chunks = collect_chunks(args.docs, args.chunk, args.overlap, args.strategy)
+    if args.regulations:
+        chunks += regulation_chunks()
     if not chunks:
         log.error("nothing to ingest")
         return 1

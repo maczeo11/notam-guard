@@ -121,6 +121,9 @@ class InMemoryVectorAdapter(VectorStorePort):
         if settings.notam_dir.is_dir():
             for path in sorted(settings.notam_dir.glob("*.txt")):
                 chunks.extend(chunk_lines(path.read_text(encoding="utf-8-sig")))
+        if settings.corpus == "full":
+            from src.regulations import load_chunks       # real documents, chunked by rule and section
+            chunks.extend(chunk.text for chunk in load_chunks())
         return chunks
 
     def _build_idf(self) -> dict:

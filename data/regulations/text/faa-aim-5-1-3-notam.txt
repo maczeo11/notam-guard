@@ -1,0 +1,60 @@
+# FAA Aeronautical Information Manual (AIM), 5-1-3. Notice to Airmen (NOTAM) System
+### General
+The NOTAM system provides pilots with time critical aeronautical information that is temporary, or information to be published on aeronautical charts at a later date, or information from another operational publication. The NOTAM is cancelled when the information in the NOTAM is published on the chart or when the temporary condition is returned to normal status. NOTAMs may be disseminated up to 7 days before the start of activity. Pilots can access NOTAM information online via NOTAM Search at: https://notams.aim.faa.gov/notamSearch/ or from an FSS.
+### Preflight
+14 CFR § 91.103, Preflight Action directs pilots to become familiar with all available information concerning a planned flight prior to departure, including NOTAMs. Pilots may change their flight plan based on available information. Current NOTAM information may affect:
+- Aerodromes.
+- Runways, taxiways, and ramp restrictions.
+- Obstructions.
+- Communications.
+- Airspace.
+- Status of navigational aids or radar service availability.
+- Other information essential to planned en route, terminal, or landing operations.
+### ARTCC NOTAMs
+Pilots should also review NOTAMs for the ARTCC area (for example, Washington Center (ZDC), Cleveland Center (ZOB), etc.) in which the flight will be operating. You can find the 3 letter code for each ARTCC on the FAA’s NOTAM webpage. These NOTAMs may affect the planned flight. Some of the operations include Central Altitude Reservation Function (CARF), Special Use Airspace (SUA), Temporary Flight Restrictions (TFR), Global Positioning System (GPS), Flight Data Center (FDC) changes to routes, wind turbine, and Unmanned Aircraft System (UAS).
+### Destination Update
+Pilots should also contact ATC or FSS while en route to obtain updated airfield information for their destination. This is particularly important when flying to the airports without an operating control tower. Snow removal, fire and rescue activities, construction, and wildlife encroachment, may pose hazards to pilots. This information may not be available to pilots prior to arrival/departure.
+### NAVAID NOTAMs
+Pilots should check NOTAMs to ensure NAVAIDs required for the flight are in service. A NOTAM is published when a NAVAID is out of service or Unserviceable (U/S). Although a NAVAID is deemed U/S and planned for removal from service, it may be a long time before that NAVAID is officially decommissioned and removed from charts. A NOTAM is the primary method of alerting pilots to its unavailability. Pilots using VFR charts can also review the Aeronautical Information Services’ (AIS) website concerning Safety Alerts, Charting Notices, and Digital Product Notices at https://www.faa.gov/air_traffic/flight_info/aeronav/safety_alerts/ for additional chart information.
+### GPS NOTAMs
+The FAA issues information on the status of GPS through the NOTAM system. Operators may find information on GPS satellite outages, GPS testing, and GPS anomalies by specifically searching for GPS NOTAMS prior to flight.
+The NOTAM system uses the terms UNRELIABLE (UNREL), MAY NOT BE AVAILABLE (AVBL), and NOT AVAILABLE (AVBL) when describing the status of GPS. UNREL indicates the expected level of service of the GPS and/or WAAS may not be available. Pilots must then determine the adequacy of the signal for desired use. Aircraft should have additional navigation equipment for their intended route.
+GPS operations may also be NOTAMed for testing. This is indicated in the NOTAM language with the name of the test in parenthesis. When GPS testing NOTAMS are published and testing is actually occurring, ATC will advise pilots requesting or cleared for a GPS or RNAV (GPS) approach, that GPS may not be available and request the pilot’s intentions.
+### NOTAM Classification
+NOTAM information is classified as Domestic NOTAMs (NOTAM D), Flight Data Center (FDC) NOTAMs, International NOTAMs, or Military NOTAMs.
+### NOTAM (D)
+NOTAM (D) information is disseminated for all navigational facilities that are part of the National Airspace System (NAS), all public use aerodromes, seaplane bases, and heliports listed in the Chart Supplement. NOTAM (D) information includes taxiway closures, personnel and equipment near or crossing runways, and airport lighting aids that do not affect instrument approach criteria (i.e., VGSI). All NOTAM Ds must have one of the keywords, such as APRON (ramp), RWY (runway) or SVC (Services), as the first part of the text after the location identifier. These keywords categorize NOTAM Ds by subject. There are several types of NOTAM Ds:
+- Aerodrome activity and conditions, to include field conditions.
+- Airspace to include CARF, SUA, and general airspace activity like UAS or pyrotechnics.
+- Visual and radio navigational aids.
+- Communication and services.
+### Pointer NOTAMs
+NOTAMs issued to point to additional aeronautical information. When pointing to another NOTAM, the keyword in the pointer NOTAM must match the keyword in the original NOTAM. Pointer NOTAMs should be issued for, but are not limited to, TFRs, Airshows, Temporary SUA, major NAS system interruptions, etc.
+### FDC NOTAMs
+FDC NOTAMs are issued when it is necessary to disseminate regulatory information. FDC NOTAMs include:
+- Amendments to published IAPs and other current aeronautical charts.
+- Temporary Flight Restrictions (TFR) restrict entrance to a certain airspace at a certain time, however, some TFRs provide relief if ATC permission is given to enter the area when requested. Online preflight resources for TFRs provide graphics and plain language interpretations.
+- High barometric pressure warning.
+- Laser light activity.
+- ADS-B, TIS-B, and FIS-B service availability.
+- Satellite-based systems such as WAAS or GPS.
+- Special Notices.
+### International NOTAMs
+International NOTAMs are published in ICAO format per Annex 15 and distributed to multiple countries.
+International NOTAMs issued by the U.S. NOTAM Office use Series A followed by 4 sequential numbers, a slant “/” and a 2-digit number representing the year the NOTAM was issued. International NOTAMs basically duplicate data found in a U.S. Domestic NOTAM.
+Not every topic of a U.S. Domestic NOTAM is issued as an International NOTAM by the U.S. The U.S. International NOTAM will be linked to the appropriate U.S. Domestic NOTAM when possible.
+International NOTAMs received by the FAA from other countries are stored in the U.S. NOTAM System.
+The International NOTAM format includes a “Q” Line that can be easily read/parsed by a computer and allows the NOTAM to be displayed digitally.
+- Field A: ICAO location identifier or FIR affected by the NOTAM.
+- Field B: Start of Validity.
+- Field C: End of Validity (both in [Year][Month][Day][Hour][Minute] format).
+- Field D: (when present) Schedule.
+- Field E: Full NOTAM description.
+- Field F: (when present) Lowest altitude, or “SFC.”
+- Field G: (when present) Highest altitude, or “UNL.”
+For more on International format, please see Annex 15.
+### Military NOTAMs
+Military NOTAMs are NOTAMs originated by the U.S. Air Force, Army, Marine, or Navy, and pertaining to military or joint-use navigational aids/airports that are part of the NAS. Military NOTAMs are published in the International NOTAM format and should be reviewed by users of a military or joint-use facility.
+### Security NOTAMs
+U.S. Domestic Security NOTAMS are FDC NOTAMS that inform pilots of certain U.S. security activities or requirements, such as Special Security Instructions for aircraft operations to, from, within, or transitioning U.S. territorial airspace. These NOTAMS are found on the Federal NOTAM System (FNS) NOTAM Search website under the location designator KZZZ.
+United States International Flight Prohibitions, Potential Hostile Situations, and Foreign Notices are issued by the FAA and are found on the Federal NOTAM System (FNS) NOTAM Search website under the location designator KICZ.

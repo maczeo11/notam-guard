@@ -50,6 +50,9 @@ class Settings:
     embedding_model: str = field(default_factory=lambda: os.getenv(
         "EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"))
     retrieval_k: int = field(default_factory=lambda: int(os.getenv("RETRIEVAL_K", "3")))
+    # "sample" (default): the illustrative clauses and the sample NOTAMs in data/.
+    # "full": those plus the real regulation corpus in data/regulations/chunks.jsonl.
+    corpus: str = field(default_factory=lambda: os.getenv("CORPUS", "sample").lower())
 
     llm_adapter: str = field(default_factory=lambda: os.getenv(
         "LLM_ADAPTER", "groq" if os.getenv("GROQ_API_KEY") else "rule"))
@@ -66,7 +69,8 @@ class Settings:
         default_factory=lambda: int(os.getenv("TICKET_TTL_SECONDS", "86400")))
     history_length: int = 5
 
-    # DGCA CAR Section 3 §7: micro RPA ceiling.
+    # The §7 height ceiling of the sample corpus. 120 m is also the green-zone ceiling in rule 3
+    # of the Drone Rules, 2021.
     max_agl_m: int = field(default_factory=lambda: int(os.getenv("MAX_AGL_M", "120")))
 
     tracing_enabled: bool = field(default_factory=lambda: _env_bool(

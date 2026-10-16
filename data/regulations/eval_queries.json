@@ -1,0 +1,20 @@
+[
+  {"query": "How high can I fly a drone in a green zone?", "expect_contains": "“green zone” means"},
+  {"query": "Do I need permission to fly in a yellow zone?", "expect_contains": "(1) No person shall operate an unmanned aircraft system in a red zone or yellow zone without prior permission"},
+  {"query": "What is the maximum penalty for breaking the drone rules?", "expect_contains": "a penalty not exceeding rupees one lakh"},
+  {"query": "How are drones classified by weight?", "expect_contains": "Nano unmanned aircraft system: weighing less than or equal to 250 grams"},
+  {"query": "How long can a temporary red zone last?", "expect_contains": "not exceeding ninety six hours at a time"},
+  {"query": "Who is allowed to declare a temporary red zone?", "expect_contains": "an officer not below the rank of Superintendent of Police"},
+  {"query": "Within how many hours must a drone accident be reported?", "expect_contains": "No later than forty-eight hours after an accident"},
+  {"query": "Do I need a remote pilot licence to fly a nano drone?", "expect_contains": "operating a nano unmanned aircraft system"},
+  {"query": "Can a drone carry weapons or explosives?", "expect_contains": "arms, ammunitions, munitions of war"},
+  {"query": "How much is the fee to register a drone?", "expect_contains": "Issuance, transfer or deregistration of unique identification number — 100"},
+  {"query": "Must a pilot check the airspace map before flying?", "expect_contains": "a remote pilot shall mandatorily verify the digital sky platform"},
+  {"query": "Is third party insurance required for drones?", "expect_contains": "third party insurance of unmanned aircraft system"},
+  {"query": "When can the airspace zones change?", "expect_contains": "no sooner than seven days after the date of such update"},
+  {"query": "What does a drone operator have to do about right of way?", "expect_contains": "violate the right of way of a manned aircraft"},
+  {"query": "What is a NOTAM?", "expect_contains": "time critical aeronautical information that is temporary"},
+  {"query": "What are the fields of an international NOTAM?", "expect_contains": "Field A: ICAO location identifier"},
+  {"query": "What is a UTM service provider?", "expect_contains": "UTMSP"},
+  {"query": "How is drone traffic kept apart from manned aircraft?", "expect_contains": "Strategic Deconfliction"}
+]
