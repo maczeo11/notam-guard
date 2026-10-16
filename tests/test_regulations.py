@@ -148,6 +148,9 @@ def test_all_fifty_five_rules_and_the_five_forms_of_the_drone_rules_are_present(
     ("Rule 22", ["No person shall operate an unmanned aircraft system in a red zone or yellow zone without prior permission"]),
     ("Rule 24", ["not exceeding ninety six hours", "five kilometre"]),
     ("Rule 30", ["No later than forty-eight hours"]),
+    # Printed without "to" ("authorised impart training"). An independent copy has the same wording.
+    # It is kept as printed: a transcription must not quietly correct its source.
+    ("Rule 38", ["shall be authorised impart training unless"]),
     ("Rule 46", ["Issuance of type certificate — 100", "Authorisation or renewal of authorisation of remote pilot training organisation — 1,000"]),
     ("Rule 49", ["Rule 22 and Rule 27 shall be cognizable and non-compoundable"]),
     ("Rule 50", ["a penalty not exceeding rupees one lakh"]),
