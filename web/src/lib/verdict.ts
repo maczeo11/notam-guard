@@ -3,47 +3,73 @@ import type { Verdict } from './api'
 /**
  * Colour is reserved for verdict state. Nothing else in the interface is
  * saturated, so the decision is the only thing competing for attention.
+ *
+ * `headline` is what a first-time visitor reads; `label` is the gate's own word
+ * (the API, the docs and the CV all say ALLOW, BLOCK and HOLD), shown beside it.
  */
 export const VERDICT_THEME: Record<Verdict, {
   label: string
+  headline: string
+  glyph: string
   accent: string
   border: string
   bg: string
   dot: string
-  meaning: string
+  plain: string
 }> = {
   ALLOW: {
     label: 'ALLOW',
+    headline: 'Clear to fly',
+    glyph: '✓',
     accent: 'text-emerald-300',
     border: 'border-emerald-900/70',
     bg: 'bg-emerald-950/40',
     dot: 'bg-emerald-400',
-    meaning: 'Geometry is clear and every citation was found in the corpus.',
+    plain: 'No rule or restriction is broken, and the official text backs that up.',
   },
   BLOCK: {
     label: 'BLOCK',
+    headline: 'Do not fly',
+    glyph: '✕',
     accent: 'text-rose-300',
     border: 'border-rose-900/70',
     bg: 'bg-rose-950/40',
     dot: 'bg-rose-400',
-    meaning: 'A ceiling or NOTAM restriction is breached.',
+    plain: 'This plan breaks a rule or a restriction. A person has to review it.',
   },
   HOLD: {
     label: 'HOLD',
+    headline: 'Held for a person',
+    glyph: '!',
     accent: 'text-amber-300',
     border: 'border-amber-900/70',
     bg: 'bg-amber-950/40',
     dot: 'bg-amber-400',
-    meaning: 'The decision could not be justified, so nothing was cleared.',
+    plain: 'The gate could not fully check this plan, so it will not clear it. A person has to decide.',
   },
   ERROR: {
     label: 'ERROR',
+    headline: 'Could not check',
+    glyph: '?',
     accent: 'text-ink-400',
     border: 'border-ink-700',
     bg: 'bg-ink-850',
     dot: 'bg-ink-500',
-    meaning: 'The request did not reach the API.',
+    plain: 'The request did not reach the gate.',
   },
+}
+
+/**
+ * The gate's own sentence, without the verdict word it starts with (the headline
+ * already says it, and a "clear:" under "Held for a person" reads as a contradiction)
+ * and with the abbreviation spelled out.
+ */
+export function cleanReason(reason: string, verdict: Verdict): string {
+  return reason
+    .replace(new RegExp(`^${verdict}:\\s*`), '')
+    .replace(/^clear:\s*/i, '')
+    .replace(/\bAGL\b/g, 'above ground')
+    .trim()
 }
 
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

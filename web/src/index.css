@@ -41,7 +41,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
-  .animate-pulse {
+  .animate-pulse,
+  .rotor-spin,
+  .pin::after {
     animation: none;
   }
 }
@@ -74,3 +76,88 @@
 .leaflet-tooltip::before {
   border-top-color: #332e2c !important;
 }
+
+/* The map pin is drawn with classes only: the CSP forbids inline style attributes in markup. */
+.pin { cursor: grab; }
+.pin:active { cursor: grabbing; }
+.pin-allow { --pin: #34d399; }
+.pin-block { --pin: #fb7185; }
+.pin-hold { --pin: #fbbf24; }
+.pin-none { --pin: #948a84; }
+.pin-core {
+  position: absolute;
+  inset: 7px;
+  border-radius: 9999px;
+  background: var(--pin);
+  border: 2px solid #0c0a09;
+  box-shadow: 0 0 0 2px var(--pin);
+}
+.pin::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--pin);
+  opacity: 0;
+  animation: pin-pulse 2.2s ease-out infinite;
+}
+@keyframes pin-pulse {
+  0% { transform: scale(0.55); opacity: 0.7; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+/* The drone's rotor blades turn while a check is running. */
+.rotor-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rotor 0.5s linear infinite;
+}
+@keyframes rotor {
+  to { transform: rotate(360deg); }
+}
+
+/* Height slider. --fill is set from the component as a percentage. */
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.range:focus { outline: none; }
+.range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #7dd3fc var(--fill), #332e2c var(--fill));
+}
+.range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #332e2c;
+}
+.range::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  background: #7dd3fc;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 9999px;
+  background: #e7e2df;
+  border: 2px solid #0c0a09;
+  box-shadow: 0 0 0 1px #948a84;
+}
+.range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #e7e2df;
+  border: 2px solid #0c0a09;
+  box-shadow: 0 0 0 1px #948a84;
+}
+.range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #7dd3fc; }
+.range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #7dd3fc; }

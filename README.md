@@ -157,20 +157,30 @@ it, and is held.
 declares a 5km no-fly and states no coordinates — are listed separately from
 advisories, because one costs confidence and the other does not.
 
-**Scenario presets** run the four cases that produce every verdict the gate can
-return, so the whole behaviour is three clicks away:
+**The page is written for someone who has never heard of a NOTAM.** It opens with what
+the tool does in two sentences and three steps. The verdict is shown as a plain headline
+(`ALLOW` is "Clear to fly", `BLOCK` is "Do not fly", `HOLD` is "Held for a person") with the
+gate's own word beside it, and the technical detail sits behind labelled sections.
+Dragging the pin, or the flying-height slider, re-checks the flight about half a second
+after you stop. The slider marks the legal limit and the ceiling of any notice the gate
+cited, so you can watch the answer flip at 100 m.
 
-| Preset | Result | What it shows |
+**Example flights** run the four cases that produce every verdict the gate can return, so
+the whole behaviour is one click each:
+
+| Example | Result | What it shows |
 |---|---|---|
-| Crane breach | `BLOCK` 0.80 | Cited, grounded, ticketed, held |
-| Clear flight | `ALLOW` 0.85 | Cleared — but not at 1.0, and the meter shows why |
-| Advisory zone | `ALLOW` 0.85 | An advisory NOTAM is reported, never auto-blocks |
-| Unchecked plan | `HOLD` 0.45 | Clear geometry, `act` route, nothing retrieved — held anyway |
+| Too high near a crane (`breach`) | `BLOCK` 0.80 | Cited, grounded, ticketed, held |
+| A clear flight (`clear`) | `ALLOW` 0.85 | Cleared — but not at 1.0, and the meter shows why |
+| Birds nearby (`advisory`) | `ALLOW` 0.85 | An advisory NOTAM is reported, never auto-blocks |
+| Not enough to go on (`unchecked`) | `HOLD` 0.45 | Clear geometry, `act` route, nothing retrieved — held anyway |
 
-Colour in the interface means verdict state and nothing else; no other element
-is saturated. NOTAM circles are drawn only for records the parser could place,
-and the ones it could not are named beneath the map rather than given an
-invented position.
+`?case=breach` (or `clear`, `advisory`, `unchecked`) links straight to one.
+
+Colour in the interface means verdict state. The only other colour is a pale blue used
+for the logo, the slider and a few labels. NOTAM circles are drawn only for records the
+parser could place, and the ones it could not are named beneath the map rather than
+given an invented position.
 
 ## API
 
@@ -210,18 +220,27 @@ src/
 ├── app.py                 # FastAPI
 ├── ingest.py              # corpus → pgvector
 └── eval.py                # scores the golden set
-tests/                     # 126 tests, no infrastructure required
-web/src/
-├── components/
-│   ├── DecisionPanel.tsx  # verdict, evidence, retrieved chunks, human gate
-│   ├── ConfidenceMeter.tsx# confidence drawn against the 0.75 gate
-│   ├── ScenarioBar.tsx    # the four preset cases
-│   ├── PlanForm.tsx       # flight plan inputs
-│   └── MapView.tsx        # NOTAM circles, coloured by severity
-└── lib/
-    ├── api.ts             # typed client
-    ├── scenarios.ts       # the preset cases and what each demonstrates
-    └── verdict.ts         # verdict theme + citation highlighting
+tests/                     # 146 tests; 143 run with no infrastructure
+web/
+├── public/                # favicon, Apple icon and the link-preview image
+└── src/
+    ├── components/
+    │   ├── Hero.tsx           # what this is, in plain words, and the three steps
+    │   ├── ScenarioCards.tsx  # the four example flights
+    │   ├── MapView.tsx        # draggable pin, NOTAM circles coloured by severity
+    │   ├── HeightControl.tsx  # flying-height slider with the legal limit and notice ceilings
+    │   ├── AdvancedOptions.tsx# exact position, drone name, request text
+    │   ├── DecisionPanel.tsx  # the answer, the human gate, then evidence and sources
+    │   ├── ConfidenceMeter.tsx# confidence drawn against the 0.75 bar
+    │   ├── Pipeline.tsx       # which graph steps ran
+    │   ├── Learn.tsx          # the three answers and a plain glossary
+    │   └── DroneIcon.tsx      # the logo; its rotors spin while a check runs
+    └── lib/
+        ├── api.ts             # typed client
+        ├── scenarios.ts       # the example flights and what each shows
+        ├── verdict.ts         # verdict wording and theme + citation highlighting
+        ├── plan.ts            # input limits that mirror the API
+        └── useFormErrors.ts   # validation that stays quiet until a field is left
 ```
 
 Swap any adapter with an environment variable: `VECTOR_ADAPTER=memory|pgvector`,

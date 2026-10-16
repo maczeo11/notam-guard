@@ -1,5 +1,6 @@
-import { MapContainer, TileLayer, Circle, CircleMarker, Tooltip, useMapEvents, useMap } from 'react-leaflet'
-import { useEffect } from 'react'
+import { MapContainer, TileLayer, Circle, Marker, Tooltip, useMapEvents, useMap } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Notam, Verdict } from '../lib/api'
 import { VERDICT_THEME } from '../lib/verdict'
@@ -9,11 +10,11 @@ const RING = {
   advisory: '#38bdf8',
 }
 
-const MARKER: Record<string, string> = {
-  ALLOW: '#34d399',
-  BLOCK: '#fb7185',
-  HOLD: '#fbbf24',
-  ERROR: '#7c736e',
+const PIN: Record<string, string> = {
+  ALLOW: 'pin-allow',
+  BLOCK: 'pin-block',
+  HOLD: 'pin-hold',
+  ERROR: 'pin-none',
 }
 
 function ClickHandler({ onPick }: { onPick: (lat: number, lon: number) => void }) {
@@ -21,9 +22,15 @@ function ClickHandler({ onPick }: { onPick: (lat: number, lon: number) => void }
   return null
 }
 
-function FlyTo({ lat, lon }: { lat: number; lon: number }) {
+/** Pan to the pin only when it has left the view, so dropping it does not make the map jump. */
+function Follow({ lat, lon }: { lat: number; lon: number }) {
   const map = useMap()
-  useEffect(() => { map.flyTo([lat, lon], map.getZoom(), { duration: 0.6 }) }, [lat, lon, map])
+  useEffect(() => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return
+    if (!map.getBounds().pad(-0.15).contains([lat, lon])) {
+      map.flyTo([lat, lon], map.getZoom(), { duration: 0.6 })
+    }
+  }, [lat, lon, map])
   return null
 }
 
@@ -34,23 +41,30 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
   verdict?: Verdict
   onPick: (lat: number, lon: number) => void
 }) {
-
-  // Only NOTAMs the parser could place are drawn. The rest are named below the
+  // Only notices the parser could place are drawn. The rest are named below the
   // map rather than given an invented position.
   const drawable = notams.filter(n => n.geolocatable && n.lat !== null && n.lon !== null)
   const unplaceable = notams.filter(n => !n.geolocatable)
-  const colour = MARKER[verdict ?? 'ERROR'] ?? MARKER.ERROR
+  const placed = Number.isFinite(lat) && Number.isFinite(lon)
+
+  // The pin is styled by class only: an inline style attribute would be blocked by the CSP.
+  const icon = useMemo(() => L.divIcon({
+    className: `pin ${PIN[verdict ?? 'ERROR'] ?? PIN.ERROR}`,
+    html: '<span class="pin-core"></span>',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  }), [verdict])
 
   return (
     <div className="panel overflow-hidden" role="region"
-         aria-label="Map of NOTAM restrictions. Click or tap to move the flight plan.">
-      <MapContainer center={[18.535, 73.85]} zoom={13} className="h-[300px] sm:h-[420px] w-full" scrollWheelZoom>
+         aria-label="Map of airspace restrictions. Drag the pin or tap the map to move the flight.">
+      <MapContainer center={[18.535, 73.85]} zoom={13} className="h-[260px] sm:h-[420px] lg:h-[500px] w-full" scrollWheelZoom>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
           className="dark-tiles" />
         <ClickHandler onPick={onPick} />
-        <FlyTo lat={lat} lon={lon} />
+        <Follow lat={lat} lon={lon} />
 
         {drawable.map(notam => (
           <Circle
@@ -63,37 +77,49 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
               fillOpacity: 0.07,
             }}>
             <Tooltip>
-              {notam.id} · {notam.severity}
-              {notam.max_alt_m !== null ? ` · max ${notam.max_alt_m}m` : ' · no stated limit'}
+              {notam.id} · {notam.severity === 'restrictive' ? 'restricted' : 'caution'}
+              {notam.max_alt_m !== null ? ` · max ${notam.max_alt_m} m` : ' · no stated limit'}
             </Tooltip>
           </Circle>
         ))}
 
-        <CircleMarker
-          center={[lat, lon]}
-          radius={6}
-          pathOptions={{ color: colour, fillColor: colour, fillOpacity: 0.9, weight: 2 }}>
-          <Tooltip permanent direction="top" offset={[0, -8]}>
-            {verdict ? VERDICT_THEME[verdict]?.label ?? 'flight plan' : 'flight plan'}
-          </Tooltip>
-        </CircleMarker>
+        {placed && (
+          <Marker
+            position={[lat, lon]}
+            icon={icon}
+            draggable
+            eventHandlers={{
+              dragend: event => {
+                const point = (event.target as L.Marker).getLatLng()
+                onPick(point.lat, point.lng)
+              },
+            }}>
+            <Tooltip permanent direction="top" offset={[0, -16]}>
+              {VERDICT_THEME[verdict ?? 'ERROR']?.headline ?? 'Your flight'}
+            </Tooltip>
+          </Marker>
+        )}
       </MapContainer>
 
-      <div className="px-3 py-2.5 border-t border-ink-800 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        <span className="label">Tap the map to move the plan</span>
-        <span className="flex items-center gap-1.5 text-xs text-ink-400">
-          <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.restrictive }} />
-          restrictive
-        </span>
-        <span className="flex items-center gap-1.5 text-xs text-ink-400">
-          <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.advisory }} />
-          advisory
-        </span>
-        {unplaceable.length > 0 && (
-          <span className="text-xs text-amber-300/90 sm:ml-auto"
-                title="The parser found a restriction in these records but no position, so they cannot be drawn.">
-            {unplaceable.map(n => n.id).join(', ')} not drawn: no coordinates
+      <div className="px-3.5 py-2.5 border-t border-ink-800 space-y-1.5">
+        <p className="text-xs text-ink-200">
+          <strong className="font-medium">Drag the pin</strong>, or tap anywhere on the map, to move the drone.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-400">
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.restrictive }} />
+            Red circle: a height limit or no-go area
           </span>
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.advisory }} />
+            Blue circle: caution only
+          </span>
+        </div>
+        {unplaceable.length > 0 && (
+          <p className="text-xs text-amber-300/90"
+             title="The notice states a restriction but no usable location, so it cannot be drawn.">
+            {unplaceable.map(n => n.id).join(', ')} can't be drawn: the notice gives no location.
+          </p>
         )}
       </div>
     </div>

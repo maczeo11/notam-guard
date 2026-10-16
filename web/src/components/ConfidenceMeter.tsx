@@ -11,16 +11,16 @@ const BAR: Record<string, string> = {
 /** What the number means for this verdict. The gate only matters to an ALLOW. */
 function caption(verdict: Verdict | undefined, value: number): string {
   if (verdict === 'BLOCK') {
-    return 'A breach always goes to a person. Confidence shows how well the evidence backs the block.'
+    return 'A breach always goes to a person. The number shows how well the evidence backs the block.'
   }
   if (verdict === 'HOLD') {
     return value < GATE
-      ? `Below the ${GATE.toFixed(2)} gate, so a person must review it.`
+      ? `Below the ${GATE.toFixed(2)} needed to clear, so a person must review it.`
       : 'A required check did not run, so a person must review it.'
   }
   return value >= GATE
-    ? `At or above the ${GATE.toFixed(2)} gate, so it clears without a person reviewing it.`
-    : `Below the ${GATE.toFixed(2)} gate: an ALLOW would be downgraded to a HOLD.`
+    ? `At or above the ${GATE.toFixed(2)} needed to clear, so no person has to review it.`
+    : `Below the ${GATE.toFixed(2)} needed to clear: this would be downgraded to a hold.`
 }
 
 /**
@@ -37,7 +37,7 @@ export function ConfidenceMeter({ value = 0, verdict, tone }: {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <span className="label">Confidence</span>
+        <span className="label">How sure it is</span>
         <span className={`font-mono text-sm tabular ${tone}`}>{value.toFixed(2)}</span>
       </div>
 
@@ -55,7 +55,7 @@ export function ConfidenceMeter({ value = 0, verdict, tone }: {
       <div className="relative h-4" aria-hidden>
         <span className="absolute -translate-x-1/2 font-mono text-[11px] text-ink-400 whitespace-nowrap"
               style={{ left: `${GATE * 100}%` }}>
-          gate {GATE.toFixed(2)}
+          {GATE.toFixed(2)} needed to clear
         </span>
       </div>
 

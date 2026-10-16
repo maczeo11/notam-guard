@@ -735,16 +735,18 @@ The interface is a Vite, React and TypeScript app in `web/src`.
 - `lib/api.ts` is a typed client for `/api/validate`, `/api/approve/{id}`, `/api/notams` and `/api/health`. It does not send `scheduled_for`.
 - `lib/scenarios.ts` holds four presets that between them produce every verdict.
 - `lib/verdict.ts` holds the verdict theme and `findDefinition`, which mirrors `find_definition` in `core/citations.py`, so the interface highlights where a rule is defined and not every place it is mentioned. It was checked against the Python rule on seven shared cases.
-- `components/` has `DecisionPanel`, `ConfidenceMeter` (confidence drawn against the 0.75 gate), `ScenarioBar`, `PlanForm` and `MapView` (circles for the NOTAMs that could be placed).
+- `components/` has `Hero` (what the tool does, in plain words), `ScenarioCards`, `MapView` (a draggable pin and circles for the NOTAMs that could be placed), `HeightControl` (a slider that marks the legal limit and the ceiling of any notice the gate cited), `AdvancedOptions`, `DecisionPanel` (the answer first, then the human gate, then evidence and sources behind labelled sections), `ConfidenceMeter` (confidence drawn against the 0.75 bar), `Pipeline`, `Learn` and `DroneIcon`.
+- The page re-checks the flight about 450 ms after the last change, and ignores a reply that arrives after a newer request. A plan with an invalid field is not sent. The slider's marks come from the gate's own citations, so the interface carries no second copy of the geometry.
+- The verdict is shown as a plain headline (`ALLOW` is "Clear to fly", `BLOCK` is "Do not fly", `HOLD` is "Held for a person") with the gate's word beside it. The strict CSP rules out inline style attributes in markup, so the map pin is drawn with CSS classes.
 
-The presets give the same results now, a year from now and at the evaluation instant.
+The examples give the same results now, a year from now and at the evaluation instant.
 
-| Preset | Verdict | Confidence | Route |
+| Example (id) | Verdict | Confidence | Route |
 |---|---|---|---|
-| Crane breach | `BLOCK` | 0.80 | both |
-| Clear flight | `ALLOW` | 0.85 | both |
-| Advisory zone | `ALLOW` | 0.85 | both |
-| Unchecked plan | `HOLD` | 0.45 | act |
+| Too high near a crane (`breach`) | `BLOCK` | 0.80 | both |
+| A clear flight (`clear`) | `ALLOW` | 0.85 | both |
+| Birds nearby (`advisory`) | `ALLOW` | 0.85 | both |
+| Not enough to go on (`unchecked`) | `HOLD` | 0.45 | act |
 
 ## 24. Tests
 
