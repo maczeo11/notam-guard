@@ -15,7 +15,8 @@ export default {
           850: '#1a1817',
           800: '#232020',
           700: '#332e2c',
-          500: '#7c736e',
+          // Secondary text. Lightened from #7c736e so small labels meet 4.5:1 on ink-900.
+          500: '#948a84',
           400: '#a49a94',
           200: '#e7e2df',
         },

@@ -39,8 +39,18 @@ export type FlightPlan = {
 
 export const DEFAULT_QUERY = 'validate flight against DGCA CAR and active NOTAMs'
 
+/** `status` is 0 when the request never reached a server. */
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 async function json<T>(response: Response): Promise<T> {
-  if (!response.ok) throw new Error(`${response.status} ${await response.text()}`)
+  if (!response.ok) throw new ApiError(response.status, `${response.status} ${await response.text()}`)
   return response.json() as Promise<T>
 }
 
@@ -50,7 +60,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     return await json<T>(res)
   } catch (err) {
     if (err instanceof TypeError) {
-      throw new Error('Network error. Is the backend running?')
+      throw new ApiError(0, 'Network error: the request did not reach the server.')
     }
     throw err
   }
@@ -65,7 +75,7 @@ export function validateFlight(plan: FlightPlan) {
 }
 
 export function approveTicket(ticketId: string, approver: string) {
-  return request<{ ticket_id: string; status: string }>(`/api/approve/${ticketId}`, {
+  return request<{ ticket_id: string; status: string; approved_by: string }>(`/api/approve/${ticketId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ approver }),

@@ -20,7 +20,7 @@
   }
 
   .label {
-    @apply font-mono text-[10px] uppercase tracking-[0.14em] text-ink-500;
+    @apply font-mono text-[11px] uppercase tracking-[0.12em] text-ink-500;
   }
 
   .field {
@@ -28,8 +28,28 @@
            font-mono text-sm text-ink-200 tabular
            focus:outline-none focus:border-ink-700 focus:ring-1 focus:ring-ink-700;
   }
+  .field[aria-invalid='true'] {
+    @apply border-rose-700;
+  }
+
+  /* A visible keyboard focus ring on every control. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-400
+           focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950;
+  }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-pulse {
+    animation: none;
+  }
+}
+
+/* Invert OSM tiles to dark theme — no API key needed, ever. */
+.dark-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.1) saturate(0.3);
+}
 /* Leaflet's own chrome is light by default and fights the page. */
 .leaflet-container {
   background: #0c0a09;
@@ -37,7 +57,7 @@
 .leaflet-control-attribution,
 .leaflet-bar a {
   background: #131110 !important;
-  color: #7c736e !important;
+  color: #948a84 !important;
   border-color: #232020 !important;
 }
 .leaflet-control-attribution a {

@@ -42,8 +42,9 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
   const colour = MARKER[verdict ?? 'ERROR'] ?? MARKER.ERROR
 
   return (
-    <div className="panel overflow-hidden">
-      <MapContainer center={[18.535, 73.85]} zoom={13} style={{ height: 420 }} scrollWheelZoom>
+    <div className="panel overflow-hidden" role="region"
+         aria-label="Map of NOTAM restrictions. Click or tap to move the flight plan.">
+      <MapContainer center={[18.535, 73.85]} zoom={13} className="h-[300px] sm:h-[420px] w-full" scrollWheelZoom>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
@@ -79,18 +80,19 @@ export function MapView({ notams, lat, lon, verdict, onPick }: {
       </MapContainer>
 
       <div className="px-3 py-2.5 border-t border-ink-800 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        <span className="label">Click to reposition</span>
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-400">
+        <span className="label">Tap the map to move the plan</span>
+        <span className="flex items-center gap-1.5 text-xs text-ink-400">
           <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.restrictive }} />
           restrictive
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-400">
+        <span className="flex items-center gap-1.5 text-xs text-ink-400">
           <span className="w-2.5 h-2.5 rounded-full border" style={{ borderColor: RING.advisory }} />
           advisory
         </span>
         {unplaceable.length > 0 && (
-          <span className="text-[11px] text-amber-300/70 ml-auto truncate max-w-xs" title={unplaceable.map(n => n.id).join(', ')}>
-            {unplaceable.map(n => n.id).join(', ')} not drawn — no coordinates
+          <span className="text-xs text-amber-300/90 sm:ml-auto"
+                title="The parser found a restriction in these records but no position, so they cannot be drawn.">
+            {unplaceable.map(n => n.id).join(', ')} not drawn: no coordinates
           </span>
         )}
       </div>
