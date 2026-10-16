@@ -6,7 +6,7 @@
 
 NOTAM-Guard decides whether a drone flight may launch. Given a position, an altitude and a drone id, it returns `ALLOW`, `BLOCK` or `HOLD`, along with the rule it relied on and the text of that rule.
 
-It is a prototype. The decision logic, API, tests and web interface are complete. The data is small on purpose (four DGCA clauses and three sample NOTAMs), and the system has not been run against live data.
+It is a prototype. The decision logic, API, tests and web interface are complete. The data is small on purpose (four illustrative clauses written for this demo, and three sample NOTAMs), and the system has not been run against live data.
 
 ---
 
@@ -24,7 +24,7 @@ A dispatcher proposes a flight: where, how high above the ground, which drone, a
 
 The two mistakes do not cost the same. Blocking a legal flight loses a mission. Allowing an illegal one can lose an aircraft. So the design leans one way: when in doubt, hold.
 
-**In scope:** the DGCA micro-RPA ceiling (CAR §7, 120 m above ground), NOTAMs described as a circle with an altitude limit and a validity window, returning the rule that was applied with its text, and a human approval step.
+**In scope:** the height ceiling (sample clause §7, 120 m above ground, the same figure as the green-zone ceiling in the Drone Rules, 2021), NOTAMs described as a circle with an altitude limit and a validity window, returning the rule that was applied with its text, and a human approval step.
 
 **Out of scope:** terrain, weather, airspace class, other traffic, fleet orchestration, authentication, and real NOTAM formats such as ICAO Q-codes.
 
@@ -198,6 +198,7 @@ The service runs in two modes. With `VECTOR_ADAPTER=memory` and `LLM_ADAPTER=rul
 - Real NOTAM formats and recurring daily windows are not parsed.
 - Terrain, weather and other traffic are not modelled. Altitude is assumed to be above ground level.
 - The approval step has no authentication.
+- The default corpus is illustrative. A real corpus (the Drone Rules, 2021, its amendments and two explainers, 176 chunks) is in `data/regulations` and is opt-in. The gate's rules do not read it: only retrieval and grounding can.
 - Postgres and Redis are tested through fakes. The DynamoDB store is tested with moto, and its concurrency checks have been run against a real table. The Groq adapter has not been run against a live provider.
 
 ---
@@ -351,7 +352,8 @@ All settings are read in `src/core/config.py`.
 | `LLM_ADAPTER` | `groq` if a key is set, else `rule` | Routing and wording backend |
 | `DATABASE_URL`, `REDIS_URL` | local defaults | Connections |
 | `RETRIEVAL_K` | 3 | Chunks per similarity search |
-| `MAX_AGL_M` | 120 | DGCA ceiling |
+| `MAX_AGL_M` | 120 | Height ceiling |
+| `CORPUS` | `sample` | `full` adds the real regulation corpus in `data/regulations` |
 | `HUMAN_GATE_CONFIDENCE` | 0.75 | Below this an `ALLOW` becomes a `HOLD` |
 | `TICKET_TTL_SECONDS` | 86400 | Ticket lifetime and dedupe window |
 | `LANGSMITH_TRACING`, `LANGSMITH_API_KEY` | off | Tracing |

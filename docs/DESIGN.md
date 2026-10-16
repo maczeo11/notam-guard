@@ -9,7 +9,7 @@ NOTAM-Guard decides whether a drone flight may launch. You give it a position, a
 
 This document has two parts. The first (sections 1 to 12) is the high-level design: what the system is for, how it is put together and why. The second (sections 13 to 26) is the low-level design: the types, contracts, algorithms, API and storage.
 
-The system is a working prototype. The decision logic, API, tests and web interface are complete. The data is very small (four DGCA clauses and three NOTAMs), and the system has never run against live data. The test suite has 127 tests, of which 126 run by default. The Postgres, Redis and LLM adapters are tested against fakes, not live services. Section 11 covers what that leaves open.
+The system is a working prototype. The decision logic, API, tests and web interface are complete. The data is very small (four illustrative clauses and three NOTAMs), and the system has never run against live data. The test suite has 177 tests, of which 174 run by default. The Postgres, Redis and LLM adapters are tested against fakes, not live services. Section 11 covers what that leaves open.
 
 ---
 
@@ -35,7 +35,7 @@ The obvious way to build this is to retrieve some regulations, ask a language mo
 
 The system covers:
 
-- the DGCA micro-RPA altitude ceiling (CAR §7, 120 m AGL)
+- the height ceiling (sample clause §7, 120 m AGL, which is also the green-zone ceiling in rule 3 of the Drone Rules, 2021)
 - NOTAMs expressed as a circle with an altitude limit and a validity window
 - returning the rule that was applied, with the retrieved text that defines it
 - a human approval step for every `BLOCK` and `HOLD`
@@ -256,7 +256,7 @@ A separate evaluation scores 16 golden queries at a fixed instant (2026-09-02 at
 | Retrieval hit rate | 0.857 (12 of 14) | Whether similarity search alone puts the defining chunk in the top three |
 | Grounded citation rate | 1.0 | Whether, after the whole graph including the lookup, every citation is grounded |
 
-Sixteen cases over eight chunks is a smoke test, not an evaluation. A real one needs the full DGCA CAR and a NOTAM feed.
+Sixteen cases over eight chunks is a smoke test, not an evaluation. A real one needs a real NOTAM feed. `data/regulations` now holds real regulation text (retrieval on 18 questions: 12 for keyword search, 15 for embeddings, the second measured once outside the repo), but the gate's rules and the evaluation cases still run on the sample.
 
 ## 11. Limitations
 
@@ -699,7 +699,8 @@ Every environment variable is read in `src/core/config.py` and nowhere else.
 | `NOTAM_DIR` | `data/notams` | Directory the parser reads |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | 384 dimensions |
 | `RETRIEVAL_K` | `3` | Chunks per similarity query |
-| `MAX_AGL_M` | `120` | The DGCA CAR §7 ceiling |
+| `MAX_AGL_M` | `120` | The height ceiling (the sample §7 clause) |
+| `CORPUS` | `sample` | `full` adds the real regulation corpus in `data/regulations` |
 | `HUMAN_GATE_CONFIDENCE` | `0.75` | An `ALLOW` below this becomes a `HOLD` |
 | `TICKET_TTL_SECONDS` | `86400` | Dedupe window and ticket lifetime |
 | `GROQ_API_KEY`, `GROQ_MODEL` | none, `openai/gpt-oss-20b` | Optional LLM backend |

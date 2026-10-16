@@ -161,6 +161,20 @@ conditional too and a collision draws a new id instead of overwriting another ti
 A table that throttles or cannot be reached raises `TicketStoreUnavailable`: the verdict
 is returned unchanged with a warning and no ticket, and `/approve` answers 503.
 
+## Corpora
+
+Two corpora exist and they are kept apart on purpose. The **sample** (`data/dgca_car.txt`,
+`data/notams/`) is eight lines of illustrative text that the gate, the tests and the
+evaluation run on; one clause or one NOTAM per line, so the unit a citation points at is
+one chunk. The **real corpus** (`data/regulations/`, built by `src/regulations.py`) holds
+the Drone Rules, 2021, its amendments, the UTM policy framework and an FAA NOTAM
+explainer: 176 chunks cut by rule and section, each starting with a header that names the
+document, Part and rule. It is opt-in (`CORPUS=full`, or `--regulations` for pgvector) so
+that adding it cannot change a verdict or an evaluation number. Rules the amendments
+changed carry an editorial note saying so. `python -m src.regulations eval` scores
+retrieval on 18 questions (keyword search 12, bge-small embeddings 15, the second measured
+once outside the repo).
+
 ## Failure modes
 
 | Failure | Response |

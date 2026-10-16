@@ -26,7 +26,7 @@ NOTAM-Guard is built around three constraints instead.
 
 **The language model never decides.** Verdicts come from
 [`src/tools.py`](src/tools.py) — haversine distance against parsed NOTAM circles and
-the DGCA §7 ceiling. The LLM routes the request and writes the sentence a human
+the 120 m height ceiling. The LLM routes the request and writes the sentence a human
 reads. It cannot turn a `BLOCK` into an `ALLOW`, because it is never asked. It also
 cannot clear a flight by routing around a check: a plan that was never validated, or
 that nothing was retrieved to ground, is held outright, not merely marked down.
@@ -94,7 +94,7 @@ pip install -r requirements-dev.txt
 cp .env.example .env
 
 # Runs with no infrastructure: lexical retrieval, rule-based router, in-process memory.
-VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 143 passing, 3 skipped (live Redis, live DynamoDB)
+VECTOR_ADAPTER=memory LLM_ADAPTER=rule python -m pytest    # 174 passing, 3 skipped (live Redis, live DynamoDB)
 VECTOR_ADAPTER=memory LLM_ADAPTER=rule python src/eval.py
 ```
 
@@ -220,7 +220,7 @@ src/
 ├── app.py                 # FastAPI
 ├── ingest.py              # corpus → pgvector
 └── eval.py                # scores the golden set
-tests/                     # 146 tests; 143 run with no infrastructure
+tests/                     # 177 tests; 174 run with no infrastructure
 web/
 ├── public/                # favicon, Apple icon and the link-preview image
 └── src/
@@ -272,9 +272,26 @@ search alone and is 0.857 on purpose: the lexical retriever misses the §7 claus
 2 of 14 queries, and the gate recovers it by fetching cited rules by identifier. The
 corpus is 8 chunks; the retrieval number will not survive contact with a real one.
 
+## Real regulations (optional)
+
+`data/regulations/` holds real documents chunked by rule and section: the Drone Rules, 2021
+(55 rules and 5 forms), its 2022 and 2023 amendments, the National UTM Policy Framework, and
+the FAA's explanation of NOTAMs (labelled as US guidance, not Indian law). That is 176 chunks,
+with provenance, an accuracy statement and 18 test questions in
+[its README](data/regulations/README.md). Switch it on with `CORPUS=full` (in-memory search)
+or `python -m src.ingest --docs "data/notams/*.txt" --regulations` (pgvector). It is off by
+default, so the demo and the evaluation above still run on the small sample.
+
+On those 18 questions the in-memory keyword search finds the right chunk in its top 3 for 12
+(0.667), and the project's `bge-small` embeddings for 15 (0.833, measured once with a script
+that is not in this repository). The clauses in `data/dgca_car.txt` are illustrative text
+written for this demo, not official DGCA clauses; real rule 3 does set the same 120 m
+(400 ft) green-zone ceiling.
+
 ## Limitations
 
-- The corpus is a four-clause DGCA extract (§7, §8, §9, §12) and 3 NOTAMs. Nothing here
+- The sample corpus is four illustrative clauses (§7, §8, §9, §12) written for this demo,
+  not official text (§12, a battery rule, is in no DGCA document), and 3 NOTAMs. Nothing here
   has been tested at realistic scale. The sample NOTAM windows are fictional and run to
   2027-12-31; a test fails 60 days before they lapse.
 - The NOTAM parser handles the shapes in `data/notams/`. Real NOTAM formats (ICAO Q-codes,

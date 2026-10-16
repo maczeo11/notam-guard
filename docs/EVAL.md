@@ -47,7 +47,7 @@ behaves as specified after a refactor. It is worth having for exactly that reaso
 worth nothing as evidence that retrieval works.
 
 **`retrieval_hit_rate` is measured over 8 chunks.** The corpus is a title line and
-four DGCA clauses (§7, §8, §9, §12) plus 3 NOTAMs. At that size a lexical scorer
+four illustrative clauses (§7, §8, §9, §12) plus 3 NOTAMs. At that size a lexical scorer
 should find the right chunk almost always, and it still misses 2 of 14. This number
 will drop further on a real corpus and that is the point of tracking it.
 
@@ -124,8 +124,12 @@ dropping a no-fly zone silently.
 
 ## Known gaps
 
-- 16 cases over 8 chunks is a smoke test, not an evaluation. A real one needs a full
-  DGCA CAR and a NOTAM feed.
+- 16 cases over 8 chunks is a smoke test, not an evaluation. A real one needs real regulations
+  and a NOTAM feed.
+- The real regulation corpus (`data/regulations`, 176 chunks) has its own 18-question retrieval
+  check, scored separately (`python -m src.regulations eval`): 12 of 18 for the keyword search,
+  15 of 18 for `bge-small` embeddings (measured once, outside the repo). The gate's own
+  evaluation above still runs on the sample.
 - No adversarial retrieval cases (near-duplicate NOTAMs, superseded records).
 - The recurring-schedule field (`0600-1800 UTC`) is parsed as part of the date range
   rather than as a daily window, so NOTAM 09/04 reads as active for whole days.

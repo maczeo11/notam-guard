@@ -54,7 +54,8 @@ Every variable is read in `src/core/config.py` and nowhere else.
 | `NOTAM_DIR` | `data/notams` | corpus the parser reads |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | 384-dimensional |
 | `RETRIEVAL_K` | `3` | chunks per query |
-| `MAX_AGL_M` | `120` | DGCA CAR §7 ceiling |
+| `CORPUS` | `sample` | `sample`, or `full` to add the real regulations in `data/regulations/` (in-memory search only; for pgvector use `python -m src.ingest --regulations`) |
+| `MAX_AGL_M` | `120` | height ceiling: the sample §7 clause, and also the green-zone ceiling in rule 3 of the Drone Rules, 2021 |
 | `HUMAN_GATE_CONFIDENCE` | `0.75` | below this an `ALLOW` becomes a `HOLD` |
 | `TICKET_TTL_SECONDS` | `86400` | dedupe window |
 | `GROQ_API_KEY` | — | optional |
